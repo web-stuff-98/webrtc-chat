@@ -2,7 +2,7 @@ import redisClient from "../../utils/redis";
 import { compare, hash } from "bcrypt";
 import crypto from "crypto";
 import { IUser } from "../../interfaces/interfaces";
-import imageProcessing from "src/utils/imageProcessing";
+import imageProcessing from "../../utils/imageProcessing";
 
 class UsersDAO {
   static async login(name: string, password: string) {
