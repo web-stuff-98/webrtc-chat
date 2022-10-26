@@ -2,7 +2,6 @@ import { Response, Request } from "express";
 import UsersDAO from "../dao/users.dao";
 
 import jwt from "jsonwebtoken";
-import decodeToken from "../../utils/decodeToken";
 
 class UsersController {
   static async login(req: Request, res: Response) {

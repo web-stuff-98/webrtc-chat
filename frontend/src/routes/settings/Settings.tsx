@@ -57,7 +57,15 @@ export default function Settings() {
       <>
         <div
           onClick={() => hiddenPfpInput.current?.click()}
-          style={base64pfp ? { backgroundImage: `url(${base64pfp})` } : {}}
+          style={
+            base64pfp
+              ? { backgroundImage: `url(${base64pfp})` }
+              : {
+                  ...(userData.pfp
+                    ? { backgroundImage: `url(${userData.pfp})` }
+                    : {}),
+                }
+          }
           className={classes.pfp}
         >
           {!userData.pfp && !base64pfp && <BiUser />}

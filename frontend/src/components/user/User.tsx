@@ -15,7 +15,12 @@ export default function User({
     <div className={classes.container}>
       {userData ? (
         <>
-          <div className={classes.pfp}>{userData.pfp ? <></> : <BiUser />}</div>
+          <div
+            style={{ backgroundImage: `url(${userData.pfp})` }}
+            className={classes.pfp}
+          >
+            {userData.pfp ? <></> : <BiUser />}
+          </div>
           <div className={classes.text}>
             <div className={classes.name}>{userData.name}</div>
             <div className={classes.dateTime}>

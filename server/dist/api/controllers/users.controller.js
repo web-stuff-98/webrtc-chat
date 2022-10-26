@@ -53,7 +53,7 @@ class UsersController {
     static updatePfp(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield users_dao_1.default.updatePfp(req.uid, req.body.base64pfp);
+                yield users_dao_1.default.updatePfp(String(req.uid), req.body.base64pfp);
                 res.status(200).json({ msg: "Updated pfp" });
             }
             catch (e) {
