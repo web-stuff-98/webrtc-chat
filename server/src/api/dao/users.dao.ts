@@ -2,6 +2,7 @@ import redisClient from "../../utils/redis";
 import { compare, hash } from "bcrypt";
 import crypto from "crypto";
 import { IUser } from "../../interfaces/interfaces";
+import imageProcessing from "src/utils/imageProcessing";
 
 class UsersDAO {
   static async login(name: string, password: string) {
@@ -74,8 +75,16 @@ class UsersDAO {
       throw new Error("Couldn't find user to update");
     }
     const u = users.find((user: IUser) => user.id === uid);
+    let pfp = ""
+    try {
+      pfp = await imageProcessing(base64, {width:32, height:32})
+    } catch (error) {
+      console.warn("There was an error processing an image : " + error)
+      await redisClient?.disconnect()
+      return
+    }
     if (u) {
-      u.pfp = base64;
+      u.pfp = pfp;
       users = users.filter((user: IUser) => user.id !== uid);
       users.push(u);
       await redisClient?.set("users", JSON.stringify(users));

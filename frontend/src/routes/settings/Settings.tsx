@@ -83,6 +83,7 @@ export default function Settings() {
           onChange={handlePfpInput}
           ref={hiddenPfpInput}
           style={{ display: "none" }}
+          accept=".jpg,.jpeg,.png,.avif"
           type="file"
           required
         />
