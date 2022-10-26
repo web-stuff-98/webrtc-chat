@@ -42,10 +42,10 @@ app.use("/rooms", rooms);
 
 const socketAuthMiddleware = async (socket: any, next: any) => {
   try {
-    console.log("Auth middleware")
-    if(!socket.handshake.auth) throw new Error("No credentials provided")
+    console.log("Auth middleware");
+    if (!socket.handshake.auth) throw new Error("No credentials provided");
     const token = socket.handshake.auth.token;
-    if (!token) throw new Error("Connection unauthenticated")
+    if (!token) throw new Error("Connection unauthenticated");
     const decodedToken = await decodeToken(token);
     const user = await UsersDAO.findById(decodedToken);
     socket.data.user = user;
@@ -137,11 +137,11 @@ io.on("connection", (socket) => {
   });
 
   const disconnected = () => {
-    console.log("UID Disconnected " + socket.data.auth)
+    console.log("UID Disconnected " + socket.data.auth);
     if (currentRoom) {
       socket.leave(currentRoom);
       io.to(currentRoom).emit("left_room", String(socket.data.auth));
-      console.log("Sent user_left event to room " + currentRoom)
+      console.log("Sent user_left event to room " + currentRoom);
     }
     currentRoom = "";
   };

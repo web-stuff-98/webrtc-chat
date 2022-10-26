@@ -27,8 +27,7 @@ function authMiddleware(req, res, next) {
         catch (error) {
             return res.status(403).json({ msg: "Unauthorized" });
         }
-        // @ts-ignore
-        req.token = decodedToken;
+        req.uid = decodedToken;
         next();
     });
 }

@@ -33,10 +33,7 @@ class UsersController {
   }
   static async updatePfp(req: Request, res: Response) {
     try {
-      // @ts-ignore
-      console.log("req.uid : " + JSON.stringify(req.uid))
-      // @ts-ignore
-      await UsersDAO.updatePfp(req.uid, req.body.base64pfp)
+      await UsersDAO.updatePfp(String(req.uid), req.body.base64pfp)
       res.status(200).json({msg:"Updated pfp"})
     } catch (e) {
       res.status(400).json({msg:`${e}`})

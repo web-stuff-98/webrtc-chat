@@ -17,7 +17,6 @@ export default async function authMiddleware(
   } catch (error) {
     return res.status(403).json({ msg: "Unauthorized" });
   }
-  // @ts-ignore
   req.uid = decodedToken
   next();
 }

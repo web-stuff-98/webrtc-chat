@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const redis_1 = __importDefault(require("../../utils/redis"));
 const bcrypt_1 = require("bcrypt");
 const crypto_1 = __importDefault(require("crypto"));
+const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
 class UsersDAO {
     static login(name, password) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -93,8 +94,17 @@ class UsersDAO {
                 throw new Error("Couldn't find user to update");
             }
             const u = users.find((user) => user.id === uid);
+            let pfp = "";
+            try {
+                pfp = yield (0, imageProcessing_1.default)(base64, { width: 32, height: 32 });
+            }
+            catch (error) {
+                console.warn("There was an error processing an image : " + error);
+                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+                return;
+            }
             if (u) {
-                u.pfp = base64;
+                u.pfp = pfp;
                 users = users.filter((user) => user.id !== uid);
                 users.push(u);
                 yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
