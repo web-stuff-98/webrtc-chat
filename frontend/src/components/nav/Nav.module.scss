@@ -31,7 +31,7 @@
 
   .accInfo {
     color: rgba(255, 255, 255, 0.5);
-    font-size: min(calc(0.275 * var(--nav-height)), 2vw);
+    font-size: min(calc(0.333 * var(--nav-height)), 2.3vw);
     cursor: pointer;
     text-align: right;
     font-family: var(--font-primary);

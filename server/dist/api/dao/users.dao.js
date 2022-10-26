@@ -80,6 +80,28 @@ class UsersDAO {
             return matching;
         });
     }
+    static updatePfp(uid, base64) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
+            const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
+            let users = [];
+            if (getU) {
+                users = JSON.parse(getU);
+            }
+            else {
+                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+                throw new Error("Couldn't find user to update");
+            }
+            const u = users.find((user) => user.id === uid);
+            if (u) {
+                u.pfp = base64;
+                users = users.filter((user) => user.id !== uid);
+                users.push(u);
+                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
+            }
+            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+        });
+    }
 }
 exports.default = UsersDAO;
 //# sourceMappingURL=users.dao.js.map

@@ -1,0 +1,53 @@
+.container {
+  width: 15pc;
+  max-width: calc(100vw - var(--padding-base) * 2);
+  padding: calc(var(--padding-base) * 2);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  border: var(--border-light);
+  background: var(--foreground);
+
+  .pfpContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    .pfp {
+      display: flex;
+      width: 3rem;
+      height: 3rem;
+      border: var(--border-base);
+      background: var(--foreground);
+      border-radius: 3px;
+      cursor: pointer;
+      background-size: cover;
+
+      svg {
+        margin: auto;
+        width: 2.5rem;
+        height: 2.5rem;
+        color: white;
+        fill: white;
+      }
+    }
+    .text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      .name {
+        font-size: 1.33rem;
+        font-family: var(--font-heading);
+      }
+      .hint {
+      line-height: 0.866;
+        font-size: 1rem;
+      }
+    }
+  }
+}

@@ -15,6 +15,7 @@ import Home from "./routes/home/Home";
 import Nav from "./components/nav/Nav";
 import Rooms from "./routes/rooms/Rooms";
 import Chat from "./routes/chat/Chat";
+import Settings from "./routes/settings/Settings";
 
 const App = () => {
   const { socket } = useSocket();
@@ -71,6 +72,7 @@ const App = () => {
           <Route path="/chat/:roomID" element={<Chat />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
         </main>
       </BrowserRouter>

@@ -47,7 +47,7 @@ export default function Rooms() {
         method: "GET",
         headers: {
           "Content-type": "application/json",
-          authentication: `Bearer ${user.token}`,
+          authorization: `Bearer ${user.token}`,
         },
       });
       const json = await res.json();

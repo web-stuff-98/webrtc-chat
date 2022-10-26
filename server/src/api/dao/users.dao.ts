@@ -62,5 +62,25 @@ class UsersDAO {
     delete matching.password;
     return matching;
   }
+
+  static async updatePfp(uid: string, base64: string) {
+    await redisClient?.connect();
+    const getU = await redisClient?.get("users");
+    let users: IUser[] = [];
+    if (getU) {
+      users = JSON.parse(getU);
+    } else {
+      await redisClient?.disconnect();
+      throw new Error("Couldn't find user to update");
+    }
+    const u = users.find((user: IUser) => user.id === uid);
+    if (u) {
+      u.pfp = base64;
+      users = users.filter((user: IUser) => user.id !== uid);
+      users.push(u);
+      await redisClient?.set("users", JSON.stringify(users));
+    }
+    await redisClient?.disconnect();
+  }
 }
 export default UsersDAO;

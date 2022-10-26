@@ -117,11 +117,15 @@
         overflow-x: hidden;
 
         .message {
-          width: 100%;
           display: flex;
           align-items: center;
           padding: var(--padding-base);
           justify-content: space-between;
+          gap:var(--padding-base);
+
+          .content {
+            flex-grow: 1;
+          }
         }
       }
     }

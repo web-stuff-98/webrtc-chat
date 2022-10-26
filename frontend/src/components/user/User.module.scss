@@ -1,0 +1,37 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:var(--padding-base);
+    margin-right: var(--padding-base);
+    .pfp {
+        border: var(--border-light);
+        background: var(--foreground);
+        width: 2rem;
+        height: 2rem;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            color:white;
+            fill:white;
+        }
+    }
+
+    .text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        line-height: 1;
+        .name {
+            font-size: 1.166rem;
+            font-family: var(--font-heading);
+        }
+        .dateTime {
+            font-size: 0.866rem;
+        }
+    }
+}

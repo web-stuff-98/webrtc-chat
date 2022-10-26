@@ -18,6 +18,7 @@ import { IParsedRoomMsg } from "../../../../server/src/interfaces/interfaces";
 import Peer from "simple-peer";
 import useAuth from "../../context/AuthContext";
 import useUsers from "../../context/UserContext";
+import User from "../../components/user/User";
 
 interface PeerWithIDs {
   peerID: string;
@@ -87,8 +88,9 @@ function Chat() {
       peerUID: payload.callerUID,
       peer,
     });
+    const userData = findUserData(payload.callerUID)
     addMsg({
-      msg: `${payload.callerUID} has joined the room`,
+      msg: `${userData ? userData.name : payload.callerUID} joined the room at ${new Date().toTimeString()}`,
       author: "server",
       createdAt: new Date(),
     });
@@ -99,18 +101,21 @@ function Chat() {
   }, []);
 
   const handleLeftRoom = useCallback((uid: string) => {
-    const item = peersRef.current.find((p) => p.peerUID === uid);
-    const f = peers.find((p) => p.peer === item?.peer);
-    if (typeof f !== undefined) {
-      f?.peer.destroy();
+    const peerRef = peersRef.current.find((p) => p.peerUID === uid);
+    if (typeof peerRef !== undefined) {
+      peerRef?.peer.destroy();
+    }
+    const peerState = peers.find((p) => p.peerUID === uid);
+    if (typeof peerState !== undefined) {
+      peerState?.peer.destroy();
     }
     setPeers((peers) => peers.filter((p) => p.peerUID !== uid));
-    const filteredPeersRef = peersRef.current.filter(
+    peersRef.current = peersRef.current.filter(
       (p: PeerWithIDs) => p.peerUID !== uid
     );
-    peersRef.current = filteredPeersRef;
+    const userData = findUserData(uid)
     addMsg({
-      msg: `${uid} has left the room`,
+      msg: `${userData ? userData.name : uid} left the room at ${new Date().toTimeString()}`,
       author: "server",
       createdAt: new Date(),
     });
@@ -267,8 +272,10 @@ function Chat() {
                   key={msg.author + msg.createdAt}
                   className={classes.message}
                 >
-                  {JSON.stringify(findUserData(msg.author))}
+                  <User customDate={msg.createdAt} userData={findUserData(msg.author)}/>
+                  <div className={classes.content}>
                   {msg.msg}
+                  </div>
                 </div>
               ))}
             <div ref={msgsBtmRef} style={{ height: "0px", width: "100%" }} />

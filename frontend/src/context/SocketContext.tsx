@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useCallback, useEffect } from "react";
 import { createContext, useContext, useState } from "react";
 
 import { io, Socket } from "socket.io-client";
@@ -19,17 +19,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     useState<Socket<ServerToClientEvents, ClientToServerEvents>>();
   const { user } = useAuth();
 
-  const connectSocket = (token: string) => {
+  const connectSocket = useCallback(() => {
     const connection = io("http://localhost:5000", {
-        query: { token },
-      }).connect();
-      setSocket(connection);
-    return () => {
-      connection.disconnect()
-    }
-  };
+      auth: { token: user.token },
+    }).connect();
+    setSocket(connection);
+  }, [user]);
 
-  useEffect(() => { if(user) connectSocket(user.token)}, [user])
+  useEffect(() => {
+    if (user) {
+      if (user.token) connectSocket();
+    }
+  }, [user]);
 
   return (
     <SocketContext.Provider value={{ socket, connectSocket }}>

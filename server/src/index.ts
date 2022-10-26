@@ -42,14 +42,10 @@ app.use("/rooms", rooms);
 
 const socketAuthMiddleware = async (socket: any, next: any) => {
   try {
-    if (socket.data.auth) {
-      return next();
-    }
-    if (!socket) throw new Error("No socket");
-    const { token } = socket.handshake.query;
-    if (!token) {
-      return;
-    }
+    console.log("Auth middleware")
+    if(!socket.handshake.auth) throw new Error("No credentials provided")
+    const token = socket.handshake.auth.token;
+    if (!token) throw new Error("Connection unauthenticated")
     const decodedToken = await decodeToken(token);
     const user = await UsersDAO.findById(decodedToken);
     socket.data.user = user;
@@ -138,22 +134,6 @@ io.on("connection", (socket) => {
       signal: payload.signal,
       id: socket.id,
     });
-  });
-
-  socket.on("get_user_data", async (uid) => {
-    if (uid === socket.data.auth)
-      return socket.emit("got_user_data", socket.data.user);
-    try {
-      const sockets = await io.fetchSockets();
-      const data = sockets.find((s) => s.data.auth === uid)?.data.user;
-      socket.emit("got_user_data", data);
-    } catch (e) {
-      socket.emit("resMsg", {
-        msg: `${e}`,
-        err: true,
-        pen: false,
-      });
-    }
   });
 
   const disconnected = () => {

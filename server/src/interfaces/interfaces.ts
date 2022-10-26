@@ -2,6 +2,7 @@ export interface IUser {
   id: string;
   name: string;
   password?: string;
+  pfp?: string;
   token?:string;
 }
 export interface IResMsg {

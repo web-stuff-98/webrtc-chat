@@ -50,6 +50,20 @@ class UsersController {
             }
         });
     }
+    static updatePfp(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                // @ts-ignore
+                console.log("req.token : " + JSON.stringify(req.token));
+                // @ts-ignore
+                yield users_dao_1.default.updatePfp(req.token, req.body.base64pfp);
+                res.status(200).json({ msg: "Updated pfp" });
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
 }
 exports.default = UsersController;
 //# sourceMappingURL=users.controller.js.map

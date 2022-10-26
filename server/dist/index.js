@@ -37,15 +37,12 @@ app.use("/users", users_route_1.default);
 app.use("/rooms", rooms_route_1.default);
 const socketAuthMiddleware = (socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (socket.data.auth) {
-            return next();
-        }
-        if (!socket)
-            throw new Error("No socket");
-        const { token } = socket.handshake.query;
-        if (!token) {
-            return;
-        }
+        console.log("Auth middleware");
+        if (!socket.handshake.auth)
+            throw new Error("No credentials provided");
+        const token = socket.handshake.auth.token;
+        if (!token)
+            throw new Error("Connection unauthenticated");
         const decodedToken = yield (0, decodeToken_1.default)(token);
         const user = yield users_dao_1.default.findById(decodedToken);
         socket.data.user = user;
@@ -121,23 +118,6 @@ io.on("connection", (socket) => {
             id: socket.id,
         });
     });
-    socket.on("get_user_data", (uid) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a;
-        if (uid === socket.data.auth)
-            return socket.emit("got_user_data", socket.data.user);
-        try {
-            const sockets = yield io.fetchSockets();
-            const data = (_a = sockets.find((s) => s.data.auth === uid)) === null || _a === void 0 ? void 0 : _a.data.user;
-            socket.emit("got_user_data", data);
-        }
-        catch (e) {
-            socket.emit("resMsg", {
-                msg: `${e}`,
-                err: true,
-                pen: false,
-            });
-        }
-    }));
     const disconnected = () => {
         console.log("UID Disconnected " + socket.data.auth);
         if (currentRoom) {

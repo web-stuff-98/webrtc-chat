@@ -1,12 +1,23 @@
 import { useNavigate } from "react-router-dom";
+import { IUser } from "../../../../server/src/interfaces/interfaces";
 import useAuth from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
+import useUsers from "../../context/UserContext";
 import classes from "./Nav.module.scss";
 
 export default function Nav() {
   const { user, logout } = useAuth();
   const { socket } = useSocket();
+  const { findUserData } = useUsers()
   const navigate = useNavigate();
+
+  const renderUserInfo = (userData: IUser) => {
+    return (
+      <>
+      {userData && userData.name}
+      </>
+    )
+  }
 
   return (
     <nav className={classes.container}>
@@ -17,6 +28,11 @@ export default function Nav() {
         {user && (
           <div onClick={() => navigate("/rooms")} className={classes.link}>
             Rooms
+          </div>
+        )}
+                {user && (
+          <div onClick={() => navigate("/settings")} className={classes.link}>
+            Settings
           </div>
         )}
         {user && (
@@ -37,9 +53,7 @@ export default function Nav() {
       </div>
       {user && (
         <div className={classes.accInfo}>
-          {user && user.id}
-          <br />
-          {socket && socket.id}
+          {user && renderUserInfo(findUserData(user.id)!)}
         </div>
       )}
     </nav>

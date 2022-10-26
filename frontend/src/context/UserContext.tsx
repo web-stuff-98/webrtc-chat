@@ -13,42 +13,39 @@ import useAuth from "./AuthContext";
 const UsersContext = createContext<{
   users: IUser[];
   cacheUserData: (uid: string, force?: boolean) => void;
-  findUserData: (uid: string) => void;
+  findUserData: (uid: string) => IUser | undefined;
 }>({
   users: [],
   cacheUserData: () => {},
-  findUserData: () => {},
+  findUserData: () => undefined,
 });
 
 export const UsersProvider = ({ children }: { children: ReactNode }) => {
-  const { socket } = useSocket();
   const { user } = useAuth();
 
   const [users, setUsers] = useState<IUser[]>([]);
 
-  const cacheUserData = useCallback((uid: string, force?: boolean) => {
+  const cacheUserData = async (uid: string, force?: boolean) => {
     const found = users.find((u: IUser) => u.id === uid);
     if (found && !force) return;
-    socket?.emit("get_user_data", uid);
-  }, []);
-
-  const gotUserData = useCallback((data: any) => {
-    console.log("Got user data : " + JSON.stringify(data))
-    if (data) setUsers((old) => [...old.filter((u) => u.id !== data.id), data]);
-  }, []);
+    const res = await fetch(`http://localhost:5000/users/${uid}`, {
+      method: "GET",
+      headers: { "Content-type": "application/json;charset=UTF-8" },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setUsers((old) => [...old, json]);
+    } else {
+      console.warn("Couldn't get data for user " + uid);
+    }
+  };
 
   const findUserData = useCallback(
-    (uid: string) => users.find((u: IUser) => u.id === uid),
+    (uid: string) => {
+      return users.find((u: IUser) => u.id === uid);
+    },
     [users]
   );
-
-  useEffect(() => {
-    if (!socket) return;
-    socket?.on("got_user_data", gotUserData);
-    return () => {
-      socket?.off("got_user_data", gotUserData);
-    };
-  }, [socket]);
 
   useEffect(() => {
     if (user) cacheUserData(user.id);
