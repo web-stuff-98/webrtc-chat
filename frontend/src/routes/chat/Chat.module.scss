@@ -1,0 +1,150 @@
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--padding-base);
+  box-sizing: border-box;
+
+  .chatWindow {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding-bottom: min(8rem, 12.5vh);
+
+    .videos {
+      width: 100%;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 3rem;
+
+      .container {
+        width: 26.666vh;
+        height: 20vh;
+        position: relative;
+
+        .spinner {
+          position: absolute;
+          width: 2rem;
+          height: 2rem;
+          left: calc(50% - 1rem);
+          top: calc(50% - 1rem);
+          animation: spin 275ms linear infinite;
+          transition: filter 150ms ease;
+        }
+
+        @keyframes spin {
+          0% {
+            transform: rotateZ(0deg);
+          }
+          100% {
+            transform: rotateZ(360deg);
+          }
+        }
+
+        video {
+          border: var(--border-pale);
+          border-radius: 3px;
+          right: var(--padding-base);
+          top: var(--padding-base);
+          box-shadow: var(--box-shadow-base);
+          object-fit: cover;
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          left: 0;
+          top: 0;
+          transition: filter 150ms ease;
+        }
+
+        .text {
+          position: absolute;
+          top: -1.333rem;
+          left: 0;
+          text-align: center;
+          width: 100%;
+        }
+      }
+    }
+
+    .messenger {
+      width: 100%;
+      border: var(--border-light);
+      background: var(--foreground);
+      position: absolute;
+      height: min(10rem, 20vh);
+      bottom: 0;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      box-sizing: content-box;
+
+      form {
+        border-top: var(--border-pale);
+        flex-shrink: 1;
+        width: 100%;
+        padding: var(--padding-base);
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+        box-sizing: border-box;
+
+        input {
+          width: 100%;
+          padding: var(--padding-base);
+        }
+        svg {
+          font-size: 2rem;
+        }
+      }
+
+      .list {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        .message {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          padding: var(--padding-base);
+          justify-content: space-between;
+        }
+      }
+    }
+  }
+
+  .controls {
+    width: 100%;
+    border: var(--border-light);
+    background: var(--foreground);
+    border-radius: 3px;
+    gap: var(--padding-base);
+    display: flex;
+    box-sizing: border-box;
+    
+    .inner {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: auto;
+      box-sizing: border-box;
+      padding: var(--padding-base);
+    }
+  }
+}

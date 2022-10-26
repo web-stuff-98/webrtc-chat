@@ -1,0 +1,40 @@
+.container {
+  height: var(--nav-height);
+  min-height: var(--nav-height);
+  background: var(--nav);
+  border-radius: 3px;
+  border: var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--nav-extra-padding);
+  box-sizing: border-box;
+  width: calc(100% - var(--horizontal-space) * 2);
+
+  * {
+    font-family: var(--font-heading);
+  }
+
+  .navLinks {
+    margin: auto 0;
+    display: flex;
+    gap: calc(var(--padding-base) * 4);
+    .link {
+      font-size: min(calc(0.333 * var(--nav-height)), 3vw);
+      cursor: pointer;
+      transition: transform 100ms ease;
+    }
+    .link:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .accInfo {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: min(calc(0.275 * var(--nav-height)), 2vw);
+    cursor: pointer;
+    text-align: right;
+    font-family: var(--font-primary);
+    line-height: 1;
+  }
+}

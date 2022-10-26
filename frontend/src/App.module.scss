@@ -1,0 +1,73 @@
+.container {
+    padding: var(--padding-base);
+    box-sizing: border-box;
+    display: flex;
+    gap: var(--padding-base);
+    height: 100vh;
+    filter:drop-shadow(var(--box-shadow-base));
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+    
+    .messageModal {
+        position: fixed;
+        z-index: 98;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
+
+        .modal {
+            background: var(--foreground);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 1.666rem;
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 0.333rem;
+            border: var(--border-pale);
+            box-shadow: var(--box-shadow-base);
+            max-width: 90vw;
+            text-align: center;
+
+            svg {
+                width: 5rem;
+                height: 5rem;
+                filter: drop-shadow(0px 4px 2px rgba(0, 0, 0, 0.1));
+            }
+
+            .err {
+                fill: red;
+            }
+
+            .pen {
+                animation: spin linear 500ms infinite;
+            }
+        }
+    }
+
+    main {
+        width: calc(100% - var(--horizontal-space) * 2 - 2px);
+        margin-right: 2px;
+        height: 100%;
+        display: flex;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotateZ(0);
+    }
+
+    100% {
+        transform: rotateZ(360deg);
+    }
+}

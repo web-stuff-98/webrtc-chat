@@ -1,0 +1,30 @@
+.container {
+    width: calc(100% - var(--horizontal-space) * 0.8666 - var(--nav-extra-padding) * 24);
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    gap:var(--padding-base);
+    background: var(--foreground);
+    border-radius: 3px;
+    border:var(--border-light);
+    padding: calc(var(--padding-base) * 4);
+    box-sizing: border-box;
+
+    button {
+        font-size: 2rem;
+    }
+
+    text-align: center;
+
+    h1 {
+        font-size: 2rem;
+        font-family: var(--font-heading);
+        margin: 0;
+        line-height: 1;
+    }
+
+    p {
+        margin: 0;
+        font-size: 1rem;
+    }
+}
