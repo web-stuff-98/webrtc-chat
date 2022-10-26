@@ -6,11 +6,10 @@
   align-items: center;
   justify-content: center;
   gap: var(--padding-base);
-  box-sizing: border-box;
 
   .chatWindow {
     position: relative;
-    width: 100%;
+    width: calc(100% - var(--horizontal-space) * 2);
     height: 100%;
     border-radius: 3px;
     display: flex;
@@ -89,7 +88,6 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
-      box-sizing: content-box;
 
       form {
         border-top: var(--border-pale);
@@ -100,6 +98,7 @@
         align-items: center;
         gap: 0.2rem;
         box-sizing: border-box;
+        
 
         input {
           width: 100%;
@@ -129,13 +128,9 @@
   }
 
   .controls {
-    width: 100%;
-    border: var(--border-light);
-    background: var(--foreground);
-    border-radius: 3px;
+    width: calc(100% - var(--horizontal-space) * 2);
     gap: var(--padding-base);
     display: flex;
-    box-sizing: border-box;
     
     .inner {
       width: 100%;
@@ -143,7 +138,11 @@
       align-items: center;
       justify-content: space-between;
       margin: auto;
-      box-sizing: border-box;
+          border: var(--border-light);
+    background: var(--foreground);
+    border-radius: 3px;
+      margin-bottom: var(--padding-base);
+      
       padding: var(--padding-base);
     }
   }

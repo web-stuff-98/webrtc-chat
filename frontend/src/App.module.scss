@@ -1,14 +1,10 @@
 .container {
-    padding: var(--padding-base);
-    box-sizing: border-box;
     display: flex;
     gap: var(--padding-base);
     height: 100vh;
     filter:drop-shadow(var(--box-shadow-base));
-    width: 100%;
     flex-direction: column;
     align-items: center;
-    overflow-y: auto;
     
     .messageModal {
         position: fixed;
@@ -55,10 +51,10 @@
     }
 
     main {
-        width: calc(100% - var(--horizontal-space) * 2 - 2px);
-        margin-right: 2px;
+        width: 100%;
         height: 100%;
         display: flex;
+        padding-top: var(--nav-height);
     }
 }
 

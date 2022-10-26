@@ -4,22 +4,25 @@
     flex-direction: column;
     gap: var(--padding-base);
     height: 100%;
+    box-sizing: border-box;
+    padding: var(--padding-base);
 
     .roomList {
         border: var(--border-light);
         background: var(--foreground);
-        width: 100%;
+        width: calc(100% - var(--horizontal-space) * 2 - var(--padding-base) * 2);
         flex-grow: 1;
         border-radius: 3px;
+        margin: auto;
         
         .room {
             width: 100%;
-            box-sizing: border-box;
             padding: calc(var(--padding-base) * 1);
             border-bottom: var(--border-pale);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-sizing: border-box;
 
             .name {
                 padding: 0 var(--padding-base);
@@ -63,19 +66,23 @@
     }
 
     .inputControls {
-        width: 100%;
         height: 3rem;
         min-height: 3rem;
-        border-radius: 3px;
-        border: var(--border-light);
-        display: flex;
-        background: var(--foreground);
-
+        position: sticky;
+        bottom: 0;
+        width: calc(100% - var(--horizontal-space) * 2);
+        margin: auto;
         .inner {
-            margin: auto;
-            width: calc(100% - var(--padding-base) * 2);
-            height: calc(100% - var(--padding-base) * 2);
+            border-radius: 3px;
+            border: var(--border-light);
             display: flex;
+            background: var(--foreground);
+            margin: auto;
+            width: calc(100% - var(--padding-base));
+            height: calc(100% - var(--padding-base));
+            display: flex;
+            box-sizing: border-box;
+            padding: var(--padding-base);
             justify-content: space-between;
             gap:var(--padding-base);
             input {

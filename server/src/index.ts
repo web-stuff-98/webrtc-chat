@@ -48,12 +48,12 @@ const socketAuthMiddleware = async (socket: any, next: any) => {
     if (!socket) throw new Error("No socket");
     const { token } = socket.handshake.query;
     if (!token) {
-      return
+      return;
     }
     const decodedToken = await decodeToken(token);
-      const user = await UsersDAO.findById(decodedToken);
-      socket.data.user = user;
-      socket.data.auth = decodedToken;
+    const user = await UsersDAO.findById(decodedToken);
+    socket.data.user = user;
+    socket.data.auth = decodedToken;
     next();
   } catch (e) {
     socket.emit("resMsg", { msg: `${e}`, err: true, pen: false });
@@ -63,7 +63,9 @@ const socketAuthMiddleware = async (socket: any, next: any) => {
 io.use(socketAuthMiddleware);
 
 io.on("connection", (socket) => {
-  console.log("Connected, socket auth" + socket.data.auth)
+  let currentRoom = "";
+
+  console.log("UID Connected to socket " + socket.data.auth);
 
   socket.on("join_create_room", async ({ roomName }) => {
     let room: any;
@@ -73,7 +75,11 @@ io.on("connection", (socket) => {
       room = await RoomsDAO.findByName(roomName);
       if (!room) {
         created = true;
-        room = await RoomsDAO.create(roomName, String(socket.data.auth), socket.id);
+        room = await RoomsDAO.create(
+          roomName,
+          String(socket.data.auth),
+          socket.id
+        );
       }
     } catch (e) {
       socket.emit("resMsg", { msg: `${e}`, err: true, pen: false });
@@ -90,10 +96,11 @@ io.on("connection", (socket) => {
         .filter((ids) => ids.sid !== socket.id);
       socket.emit("all_users", sids);
     } else {
-      io.emit("room_created", room)
-      console.log("room_created emit " + JSON.stringify(room))
+      io.emit("room_created", room);
+      console.log("room_created emit " + JSON.stringify(room));
     }
     socket?.emit("navigate_join_room", room.id);
+    currentRoom = room.id;
   });
 
   socket.on("msg_to_room", ({ msg, roomID }) => {
@@ -115,6 +122,7 @@ io.on("connection", (socket) => {
       }))
       .filter((ids) => ids.sid !== socket.id);
     socket.emit("all_users", sids);
+    currentRoom = roomID;
   });
 
   socket.on("sending_signal", (payload: any) => {
@@ -149,21 +157,13 @@ io.on("connection", (socket) => {
   });
 
   const disconnected = () => {
-    const userRooms = io.sockets.adapter.socketRooms(socket.id);
-    if (userRooms)
-      for (const room of userRooms) {
-        // for some reason the users socket id is included in socketRooms() ......
-        // It shouldn't be there but I never put it there? Quickly see if you can
-        // find another function that returns all the sockets rooms, without the
-        // socket id
-        if (room !== socket.id) {
-          if (socket.data.auth)
-            socket.broadcast
-              .to(room)
-              .emit("left_room", String(socket.data.auth));
-          socket.leave(room);
-        }
-      }
+    console.log("UID Disconnected " + socket.data.auth)
+    if (currentRoom) {
+      socket.leave(currentRoom);
+      io.to(currentRoom).emit("left_room", String(socket.data.auth));
+      console.log("Sent user_left event to room " + currentRoom)
+    }
+    currentRoom = "";
   };
 
   socket.on("leave_room", disconnected);

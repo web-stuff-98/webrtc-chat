@@ -58,7 +58,8 @@ const socketAuthMiddleware = (socket, next) => __awaiter(void 0, void 0, void 0,
 });
 io.use(socketAuthMiddleware);
 io.on("connection", (socket) => {
-    console.log("Connected, socket auth" + socket.data.auth);
+    let currentRoom = "";
+    console.log("UID Connected to socket " + socket.data.auth);
     socket.on("join_create_room", ({ roomName }) => __awaiter(void 0, void 0, void 0, function* () {
         let room;
         let created = false;
@@ -87,6 +88,7 @@ io.on("connection", (socket) => {
             console.log("room_created emit " + JSON.stringify(room));
         }
         socket === null || socket === void 0 ? void 0 : socket.emit("navigate_join_room", room.id);
+        currentRoom = room.id;
     }));
     socket.on("msg_to_room", ({ msg, roomID }) => {
         socket.to(roomID).emit("client_msg_to_room", {
@@ -104,6 +106,7 @@ io.on("connection", (socket) => {
         }))
             .filter((ids) => ids.sid !== socket.id);
         socket.emit("all_users", sids);
+        currentRoom = roomID;
     }));
     socket.on("sending_signal", (payload) => {
         io.to(payload.userToSignal).emit("user_joined", {
@@ -136,21 +139,13 @@ io.on("connection", (socket) => {
         }
     }));
     const disconnected = () => {
-        const userRooms = io.sockets.adapter.socketRooms(socket.id);
-        if (userRooms)
-            for (const room of userRooms) {
-                // for some reason the users socket id is included in socketRooms() ......
-                // It shouldn't be there but I never put it there? Quickly see if you can
-                // find another function that returns all the sockets rooms, without the
-                // socket id
-                if (room !== socket.id) {
-                    if (socket.data.auth)
-                        socket.broadcast
-                            .to(room)
-                            .emit("left_room", String(socket.data.auth));
-                    socket.leave(room);
-                }
-            }
+        console.log("UID Disconnected " + socket.data.auth);
+        if (currentRoom) {
+            socket.leave(currentRoom);
+            io.to(currentRoom).emit("left_room", String(socket.data.auth));
+            console.log("Sent user_left event to room " + currentRoom);
+        }
+        currentRoom = "";
     };
     socket.on("leave_room", disconnected);
     socket.on("disconnect", disconnected);
