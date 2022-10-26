@@ -10,6 +10,8 @@ export interface ServerToClientEvents {
   server_msg_to_room: (msg: string) => void;
   client_msg_to_room: (data: IRoomMsg) => void;
   room_created: (data: IRoom) => void;
+  room_deleted: (roomID: string) => void;
+  account_deleted: () => void;
 
   // WebRTC stuff
   receiving_returned_signal: (data: { signal: any; id: string }) => void;
@@ -29,6 +31,7 @@ export interface ClientToServerEvents {
   other_user: (uid: string, socketID: string) => void;
   join_create_room: (data: { roomName: string }) => void;
   msg_to_room: (data: { msg: string; roomID: string }) => void;
+  delete_account: () => void;
 
   // WebRTC stuff
   sending_signal: (payload: any) => void;

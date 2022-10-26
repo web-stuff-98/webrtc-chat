@@ -7,10 +7,14 @@ import { useEffect, useRef, ChangeEvent, useState } from "react";
 import { BiUser } from "react-icons/bi";
 import useAuth from "../../context/AuthContext";
 import useUsers from "../../context/UserContext";
+import { useSocket } from "../../context/SocketContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { socket } = useSocket();
   const { findUserData, cacheUserData } = useUsers();
+  const navigate = useNavigate();
 
   useEffect(() => {
     cacheUserData(user.id);
@@ -83,6 +87,19 @@ export default function Settings() {
     );
   };
 
+  const handleAccountDeleted = () => {
+    navigate("/");
+    logout()
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("account_deleted", handleAccountDeleted);
+    return () => {
+      socket.off("account_deleted", handleAccountDeleted);
+    };
+  }, []);
+
   const hiddenPfpInput = useRef<HTMLInputElement>(null);
   return (
     <div className={classes.container}>
@@ -96,6 +113,11 @@ export default function Settings() {
           required
         />
         {renderUserPfp(findUserData(user.id))}
+      </div>
+      <div className={classes.deleteButtonContainer}>
+        <button onClick={() => socket?.emit("delete_account")}>
+          Delete account
+        </button>
       </div>
       {resMsg.msg}
     </div>

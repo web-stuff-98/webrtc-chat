@@ -13,7 +13,10 @@ import classes from "./Chat.module.scss";
 import { MdSend } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
 
-import { IParsedRoomMsg } from "../../../../server/src/interfaces/interfaces";
+import {
+  IParsedRoomMsg,
+  IUser,
+} from "../../../../server/src/interfaces/interfaces";
 
 import Peer from "simple-peer";
 import useAuth from "../../context/AuthContext";
@@ -66,6 +69,10 @@ function Chat() {
     socket?.emit("join_room", { roomID });
   }, []);
 
+  const handleRoomDeleted = (deletedID: string) => {
+    if (deletedID === roomID) leaveRoom();
+  };
+
   const handleAllUsers = useCallback((ids: { sid: string; uid: string }[]) => {
     const peers: any[] = [];
     ids.forEach((ids) => {
@@ -88,9 +95,11 @@ function Chat() {
       peerUID: payload.callerUID,
       peer,
     });
-    const userData = findUserData(payload.callerUID)
+    const userData = findUserData(payload.callerUID);
     addMsg({
-      msg: `${userData ? userData.name : payload.callerUID} joined the room at ${new Date().toTimeString()}`,
+      msg: `${
+        userData ? userData.name : payload.callerUID
+      } joined the room at ${new Date().toTimeString()}`,
       author: "server",
       createdAt: new Date(),
     });
@@ -113,9 +122,11 @@ function Chat() {
     peersRef.current = peersRef.current.filter(
       (p: PeerWithIDs) => p.peerUID !== uid
     );
-    const userData = findUserData(uid)
+    const userData = findUserData(uid);
     addMsg({
-      msg: `${userData ? userData.name : uid} left the room at ${new Date().toTimeString()}`,
+      msg: `${
+        userData ? userData.name : uid
+      } left the room at ${new Date().toTimeString()}`,
       author: "server",
       createdAt: new Date(),
     });
@@ -141,6 +152,7 @@ function Chat() {
 
     socket?.on("server_msg_to_room", handleServerMsgToRoom);
     socket?.on("client_msg_to_room", handleClientMsgToRoom);
+    socket?.on("room_deleted", handleRoomDeleted);
 
     return () => {
       socket?.off("all_users", handleAllUsers);
@@ -149,6 +161,7 @@ function Chat() {
       socket?.off("receiving_returned_signal", handleReceivingReturningSignal);
       socket?.off("server_msg_to_room", handleServerMsgToRoom);
       socket?.off("client_msg_to_room", handleClientMsgToRoom);
+      socket?.off("room_deleted", handleRoomDeleted);
     };
   }, []);
 
@@ -189,7 +202,13 @@ function Chat() {
     return peer;
   };
 
-  const Video = ({ peer, uid }: { peer: Peer.Instance; uid: string }) => {
+  const Video = ({
+    peer,
+    userData,
+  }: {
+    peer: Peer.Instance;
+    userData: IUser | undefined;
+  }) => {
     const ref = useRef<HTMLVideoElement>(null);
     const [streaming, setStreaming] = useState(false);
     const handleStream = useCallback((stream: MediaStream) => {
@@ -217,7 +236,7 @@ function Chat() {
           }
           className={classes.spinner}
         />
-        <div className={classes.text}>{uid}</div>
+        <div className={classes.text}>{userData && userData.name}</div>
       </div>
     );
   };
@@ -249,15 +268,18 @@ function Chat() {
   );
   const [messages, setMessages] = useState<IParsedRoomMsg[]>([]);
   const [messageInput, setMessageInput] = useState("");
-  const handleSubmitMessage = useCallback((e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    socket?.emit("msg_to_room", { msg: messageInput, roomID: `${roomID}` });
-    addMsg({
-      msg: messageInput,
-      author: user.id,
-      createdAt: new Date(),
-    });
-  }, [messageInput]);
+  const handleSubmitMessage = useCallback(
+    (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      socket?.emit("msg_to_room", { msg: messageInput, roomID: `${roomID}` });
+      addMsg({
+        msg: messageInput,
+        author: user.id,
+        createdAt: new Date(),
+      });
+    },
+    [messageInput]
+  );
 
   const msgFormRef = useRef<HTMLFormElement>(null);
   const msgsBtmRef = useRef<HTMLDivElement>(null);
@@ -272,10 +294,11 @@ function Chat() {
                   key={msg.author + msg.createdAt}
                   className={classes.message}
                 >
-                  <User customDate={msg.createdAt} userData={findUserData(msg.author)}/>
-                  <div className={classes.content}>
-                  {msg.msg}
-                  </div>
+                  <User
+                    customDate={msg.createdAt}
+                    userData={findUserData(msg.author)}
+                  />
+                  <div className={classes.content}>{msg.msg}</div>
                 </div>
               ))}
             <div ref={msgsBtmRef} style={{ height: "0px", width: "100%" }} />
@@ -315,8 +338,12 @@ function Chat() {
               className={classes.spinner}
             />
           </div>
-          {peers.map((peer: any, index: number) => (
-            <Video uid={peer.peerUID} key={peer.peerID} peer={peer.peer} />
+          {peers.map((peer: any) => (
+            <Video
+              userData={findUserData(peer.peerUID)}
+              key={peer.peerID}
+              peer={peer.peer}
+            />
           ))}
         </div>
       </div>

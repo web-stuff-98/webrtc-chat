@@ -1,7 +1,7 @@
 import redisClient from "../../utils/redis";
 import { compare, hash } from "bcrypt";
 import crypto from "crypto";
-import { IUser } from "../../interfaces/interfaces";
+import { IRoom, IUser } from "../../interfaces/interfaces";
 import imageProcessing from "../../utils/imageProcessing";
 
 class UsersDAO {
@@ -75,19 +75,46 @@ class UsersDAO {
       throw new Error("Couldn't find user to update");
     }
     const u = users.find((user: IUser) => user.id === uid);
-    let pfp = ""
+    let pfp = "";
     try {
-      pfp = await imageProcessing(base64, {width:32, height:32})
+      pfp = await imageProcessing(base64, { width: 32, height: 32 });
     } catch (error) {
-      console.warn("There was an error processing an image : " + error)
-      await redisClient?.disconnect()
-      return
+      console.warn("There was an error processing an image : " + error);
+      await redisClient?.disconnect();
+      return;
     }
     if (u) {
       u.pfp = pfp;
       users = users.filter((user: IUser) => user.id !== uid);
       users.push(u);
       await redisClient?.set("users", JSON.stringify(users));
+    }
+    await redisClient?.disconnect();
+  }
+
+  static async deleteAccount(uid: string) {
+    await redisClient?.connect();
+    const getU = await redisClient?.get("users");
+    const getR = await redisClient?.get("rooms");
+    let users: IUser[] = [];
+    let rooms: IRoom[] = [];
+    if (getU) {
+      users = JSON.parse(getU);
+    } else {
+      await redisClient?.disconnect();
+      throw new Error("Couldn't find account to delete");
+    }
+    if (getR) {
+      rooms = JSON.parse(getR);
+    }
+    const u = users.find((user: IUser) => user.id === uid);
+    if (u) {
+      users = users.filter((user: IUser) => user.id !== uid);
+      const usersRooms = rooms.filter((room:IRoom) => room.author === uid).map((usersRoom) => usersRoom.id)
+      rooms = rooms.filter((r: IRoom) => r.author !== uid);
+      await redisClient?.set("users", JSON.stringify(users));
+      await redisClient?.set("rooms", JSON.stringify(rooms));
+      return usersRooms
     }
     await redisClient?.disconnect();
   }

@@ -23,7 +23,7 @@ const UsersContext = createContext<{
 export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
 
-  const [users, setUsers] = useState<IUser[]>([]);
+  const [users, setUsers] = useState<IUser[]>([{name:"Server", id:"server"}]);
 
   const cacheUserData = async (uid: string, force?: boolean) => {
     const found = users.find((u: IUser) => u.id === uid);

@@ -14,7 +14,7 @@ export default function Rooms() {
   const navigate = useNavigate();
   const { socket } = useSocket();
   const { user } = useAuth();
-  const { cacheUserData } = useUsers();
+  const { cacheUserData, findUserData } = useUsers();
 
   const [roomInput, setRoomInput] = useState("");
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -24,22 +24,20 @@ export default function Rooms() {
     });
   };
 
-  const navToRoom = (roomID:string) => {
+  const navToRoom = (roomID: string) => {
     navigate(`/chat/${roomID}`);
-  }
-
-  useEffect(() => {
-    if (!socket) return;
-    socket
-      .on("navigate_join_room", navToRoom);
-    return () => {
-      socket.off("navigate_join_room", navToRoom)
-    }
-  }, [socket]);
+  };
 
   const handleRoomCreated = (r: IRoom) => {
-    setRooms((old) => [...old, r]);
+    setRooms((old) => {
+      cacheUserData(r.author);
+      return [...old, r];
+    });
   };
+  const handleRoomDeleted = (id: string) => {
+    setRooms((old) => old.filter((r) => r.id !== id));
+  };
+
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const getRooms = async () => {
     try {
@@ -63,23 +61,43 @@ export default function Rooms() {
   };
 
   useEffect(() => {
-    const getRoomsInterval = setInterval(() => {
-      getRooms();
-    }, 5000);
     getRooms();
-    return () => {
-      clearInterval(getRoomsInterval);
-    };
   }, []);
 
   useEffect(() => {
     if (socket) {
       socket.on("room_created", handleRoomCreated);
+      socket.on("room_deleted", handleRoomDeleted);
+      socket.on("navigate_join_room", navToRoom);
       return () => {
         socket.off("room_created", handleRoomCreated);
+        socket.off("room_deleted", handleRoomDeleted);
+        socket.off("navigate_join_room", navToRoom);
       };
     }
   }, []);
+
+  const renderRoom = (authorData: IUser | undefined, room: IRoom) => {
+    return (
+      <>
+        <div className={classes.name}>{room.name}</div>
+        <div className={classes.timeAuthor}>
+          created {new Date(room.createdAt).toDateString()} by
+          {authorData && " " + authorData.name}
+        </div>
+        <div className={classes.options}>
+          <span
+            onClick={() => {
+              navigate(`/chat/${room.id}`);
+            }}
+            className={classes.joinIconContainer}
+          >
+            <BsDoorOpen />
+          </span>
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className={classes.container}>
@@ -87,21 +105,7 @@ export default function Rooms() {
         {rooms &&
           rooms.map((room: any) => (
             <div key={room.id} className={classes.room}>
-              <div className={classes.name}>{room.name}</div>
-              <div className={classes.timeAuthor}>
-                created {new Date(room.createdAt).toDateString()} by{" "}
-                {room.author}
-              </div>
-              <div className={classes.options}>
-                <span
-                  onClick={() => {
-                    navigate(`/chat/${room.id}`);
-                  }}
-                  className={classes.joinIconContainer}
-                >
-                  <BsDoorOpen />
-                </span>
-              </div>
+              {renderRoom(findUserData(room.author), room)}
             </div>
           ))}
       </div>

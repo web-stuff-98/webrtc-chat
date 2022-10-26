@@ -3,6 +3,7 @@ import { IUser } from "../../../../server/src/interfaces/interfaces";
 import classes from "./User.module.scss";
 
 import { BiUser } from "react-icons/bi";
+import { FaServer } from "react-icons/fa";
 
 export default function User({
   userData,
@@ -19,7 +20,13 @@ export default function User({
             style={{ backgroundImage: `url(${userData.pfp})` }}
             className={classes.pfp}
           >
-            {userData.pfp ? <></> : <BiUser />}
+            {userData.pfp ? (
+              <></>
+            ) : userData.id === "server" ? (
+              <FaServer />
+            ) : (
+              <BiUser />
+            )}
           </div>
           <div className={classes.text}>
             <div className={classes.name}>{userData.name}</div>

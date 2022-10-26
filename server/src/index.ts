@@ -42,7 +42,6 @@ app.use("/rooms", rooms);
 
 const socketAuthMiddleware = async (socket: any, next: any) => {
   try {
-    console.log("Auth middleware");
     if (!socket.handshake.auth) throw new Error("No credentials provided");
     const token = socket.handshake.auth.token;
     if (!token) throw new Error("Connection unauthenticated");
@@ -61,7 +60,21 @@ io.use(socketAuthMiddleware);
 io.on("connection", (socket) => {
   let currentRoom = "";
 
-  console.log("UID Connected to socket " + socket.data.auth);
+  socket.on("delete_account", async () => {
+    try {
+      const deletedRooms = await UsersDAO.deleteAccount(
+        String(socket.data.auth)
+      );
+      if (deletedRooms)
+        for (const roomID of deletedRooms) {
+          socket.emit("room_deleted", roomID);
+        }
+      socket.emit("account_deleted");
+    } catch (e) {
+      socket.emit("resMsg", { msg: `${e}`, err: true, pen: false });
+      return;
+    }
+  });
 
   socket.on("join_create_room", async ({ roomName }) => {
     let room: any;
@@ -93,7 +106,6 @@ io.on("connection", (socket) => {
       socket.emit("all_users", sids);
     } else {
       io.emit("room_created", room);
-      console.log("room_created emit " + JSON.stringify(room));
     }
     socket?.emit("navigate_join_room", room.id);
     currentRoom = room.id;
@@ -137,11 +149,9 @@ io.on("connection", (socket) => {
   });
 
   const disconnected = () => {
-    console.log("UID Disconnected " + socket.data.auth);
     if (currentRoom) {
       socket.leave(currentRoom);
       io.to(currentRoom).emit("left_room", String(socket.data.auth));
-      console.log("Sent user_left event to room " + currentRoom);
     }
     currentRoom = "";
   };
