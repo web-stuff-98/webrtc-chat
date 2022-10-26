@@ -67,7 +67,7 @@ io.on("connection", (socket) => {
       );
       if (deletedRooms)
         for (const roomID of deletedRooms) {
-          socket.emit("room_deleted", roomID);
+          io.emit("room_deleted", roomID);
         }
       socket.emit("account_deleted");
     } catch (e) {
