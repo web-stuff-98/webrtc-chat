@@ -112,6 +112,35 @@ class UsersDAO {
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
         });
     }
+    static deleteAccount(uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
+            const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
+            const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
+            let users = [];
+            let rooms = [];
+            if (getU) {
+                users = JSON.parse(getU);
+            }
+            else {
+                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+                throw new Error("Couldn't find account to delete");
+            }
+            if (getR) {
+                rooms = JSON.parse(getR);
+            }
+            const u = users.find((user) => user.id === uid);
+            if (u) {
+                users = users.filter((user) => user.id !== uid);
+                const usersRooms = rooms.filter((room) => room.author === uid).map((usersRoom) => usersRoom.id);
+                rooms = rooms.filter((r) => r.author !== uid);
+                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
+                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
+                return usersRooms;
+            }
+            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+        });
+    }
 }
 exports.default = UsersDAO;
 //# sourceMappingURL=users.dao.js.map

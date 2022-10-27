@@ -19,16 +19,20 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     useState<Socket<ServerToClientEvents, ClientToServerEvents>>();
   const { user } = useAuth();
 
-  const connectSocket = useCallback(() => {
+  const connectSocket = () => {
     const connection = io("http://localhost:5000", {
       auth: { token: user.token },
     }).connect();
     setSocket(connection);
-  }, [user]);
+  };
 
   useEffect(() => {
     if (user) {
-      if (user.token) connectSocket();
+      if (user.token) {
+        if (!socket) connectSocket();
+      }
+    } else {
+      socket?.disconnect()
     }
   }, [user]);
 

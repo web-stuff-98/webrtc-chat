@@ -37,7 +37,6 @@ app.use("/users", users_route_1.default);
 app.use("/rooms", rooms_route_1.default);
 const socketAuthMiddleware = (socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("Auth middleware");
         if (!socket.handshake.auth)
             throw new Error("No credentials provided");
         const token = socket.handshake.auth.token;
@@ -56,8 +55,22 @@ const socketAuthMiddleware = (socket, next) => __awaiter(void 0, void 0, void 0,
 io.use(socketAuthMiddleware);
 io.on("connection", (socket) => {
     let currentRoom = "";
-    console.log("UID Connected to socket " + socket.data.auth);
+    socket.on("delete_account", () => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const deletedRooms = yield users_dao_1.default.deleteAccount(String(socket.data.auth));
+            if (deletedRooms)
+                for (const roomID of deletedRooms) {
+                    io.emit("room_deleted", roomID);
+                }
+            socket.emit("account_deleted");
+        }
+        catch (e) {
+            socket.emit("resMsg", { msg: `${e}`, err: true, pen: false });
+            return;
+        }
+    }));
     socket.on("join_create_room", ({ roomName }) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         let room;
         let created = false;
         try {
@@ -79,10 +92,10 @@ io.on("connection", (socket) => {
             }))
                 .filter((ids) => ids.sid !== socket.id);
             socket.emit("all_users", sids);
+            io.to(room.id).emit("server_msg_to_room", `${(_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.name} has joined the room`);
         }
         else {
             io.emit("room_created", room);
-            console.log("room_created emit " + JSON.stringify(room));
         }
         socket === null || socket === void 0 ? void 0 : socket.emit("navigate_join_room", room.id);
         currentRoom = room.id;
@@ -119,11 +132,11 @@ io.on("connection", (socket) => {
         });
     });
     const disconnected = () => {
-        console.log("UID Disconnected " + socket.data.auth);
+        var _a;
         if (currentRoom) {
             socket.leave(currentRoom);
+            io.to(currentRoom).emit("server_msg_to_room", `${(_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.name} has left the room`);
             io.to(currentRoom).emit("left_room", String(socket.data.auth));
-            console.log("Sent user_left event to room " + currentRoom);
         }
         currentRoom = "";
     };

@@ -1,16 +1,8 @@
-import {
-  useState,
-  useEffect,
-  ChangeEvent,
-  FormEvent,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSocket } from "../../context/SocketContext";
 import classes from "./Chat.module.scss";
 
-import { MdSend } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
 
 import {
@@ -21,7 +13,8 @@ import {
 import Peer from "simple-peer";
 import useAuth from "../../context/AuthContext";
 import useUsers from "../../context/UserContext";
-import User from "../../components/user/User";
+import Messenger from "./Messenger";
+import Video from "./Video";
 
 interface PeerWithIDs {
   peerID: string;
@@ -34,21 +27,20 @@ interface PeerWithIDs {
 https://dev.to/bravemaster619/how-to-use-socket-io-client-correctly-in-react-app-o65
 
  ^ This is the solution for React triggering multiple socket emit event problems
-   Although... using .off before .on seems to have the same effect, the program will
-   crash the computer after a while either way, when there are multiple MediaStreams
 
-   ------------------------------------ SUMMARY ------------------------------------ 
-   Put your socket event handlers inside useCallback, and inside your useEffect
-   cleanup function use socket.off("your-event-name", yourHandler) to remove the
-   event listeners, the same as you have done already below.
+
+
+https://www.loginradius.com/blog/engineering/how-to-fix-memory-leaks-in-react/
+ 
+ ^ Read this too....... try it on everything.
 
 */
 
 function Chat() {
   const { socket } = useSocket();
-  const { user } = useAuth();
   const { roomID } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { findUserData, cacheUserData } = useUsers();
 
   const userStream = useRef<MediaStream>();
@@ -69,9 +61,9 @@ function Chat() {
     socket?.emit("join_room", { roomID });
   }, []);
 
-  const handleRoomDeleted = (deletedID: string) => {
+  const handleRoomDeleted = useCallback((deletedID: string) => {
     if (deletedID === roomID) leaveRoom();
-  };
+  }, []);
 
   const handleAllUsers = useCallback((ids: { sid: string; uid: string }[]) => {
     const peers: any[] = [];
@@ -89,47 +81,33 @@ function Chat() {
   }, []);
 
   const handleUserJoined = useCallback((payload: any) => {
+    if (
+      peersRef.current.find((p: PeerWithIDs) => p.peerID === payload.callerID)
+    )
+      return;
+    cacheUserData(payload.callerUID);
     const peer = addPeer(payload.signal, payload.callerID, userStream.current);
+    setPeers((peers: any[]) => [
+      ...peers,
+      { peer, peerID: payload.callerID, peerUID: payload.callerUID },
+    ]);
     peersRef.current.push({
       peerID: payload.callerID,
       peerUID: payload.callerUID,
       peer,
     });
-    const userData = findUserData(payload.callerUID);
-    addMsg({
-      msg: `${
-        userData ? userData.name : payload.callerUID
-      } joined the room at ${new Date().toTimeString()}`,
-      author: "server",
-      createdAt: new Date(),
-    });
-    setPeers((peers: any[]) => [
-      ...peers,
-      { peer, peerID: payload.callerID, peerUID: payload.callerUID },
-    ]);
   }, []);
 
   const handleLeftRoom = useCallback((uid: string) => {
+    if (uid === user.id) return;
     const peerRef = peersRef.current.find((p) => p.peerUID === uid);
     if (typeof peerRef !== undefined) {
       peerRef?.peer.destroy();
-    }
-    const peerState = peers.find((p) => p.peerUID === uid);
-    if (typeof peerState !== undefined) {
-      peerState?.peer.destroy();
     }
     setPeers((peers) => peers.filter((p) => p.peerUID !== uid));
     peersRef.current = peersRef.current.filter(
       (p: PeerWithIDs) => p.peerUID !== uid
     );
-    const userData = findUserData(uid);
-    addMsg({
-      msg: `${
-        userData ? userData.name : uid
-      } left the room at ${new Date().toTimeString()}`,
-      author: "server",
-      createdAt: new Date(),
-    });
   }, []);
 
   const handleReceivingReturningSignal = useCallback((payload: any) => {
@@ -141,8 +119,8 @@ function Chat() {
     navigator.mediaDevices
       .getUserMedia({ audio: true, video: true })
       .then((stream) => {
-        userStream.current = stream;
-        userVideo.current.srcObject = stream;
+        if (userStream) userStream.current = stream;
+        if (userVideo) userVideo.current.srcObject = stream;
         handleJoinRoom(String(roomID));
         socket?.on("all_users", handleAllUsers);
         socket?.on("user_joined", handleUserJoined);
@@ -150,8 +128,6 @@ function Chat() {
         socket?.on("receiving_returned_signal", handleReceivingReturningSignal);
       });
 
-    socket?.on("server_msg_to_room", handleServerMsgToRoom);
-    socket?.on("client_msg_to_room", handleClientMsgToRoom);
     socket?.on("room_deleted", handleRoomDeleted);
 
     return () => {
@@ -159,162 +135,65 @@ function Chat() {
       socket?.off("user_joined", handleUserJoined);
       socket?.off("left_room", handleLeftRoom);
       socket?.off("receiving_returned_signal", handleReceivingReturningSignal);
-      socket?.off("server_msg_to_room", handleServerMsgToRoom);
-      socket?.off("client_msg_to_room", handleClientMsgToRoom);
       socket?.off("room_deleted", handleRoomDeleted);
+      socket?.emit("leave_room");
     };
   }, []);
 
-  const createPeer = (
-    userToSignal: string,
-    callerID: string,
-    stream: MediaStream | undefined
-  ) => {
-    if (typeof stream === "undefined")
-      console.warn("Media stream is undefined");
-    const peer = new Peer({
-      initiator: true,
-      trickle: false,
-      stream,
-    });
-    peer.on("signal", (signal) => {
-      socket?.emit("sending_signal", { userToSignal, callerID, signal });
-    });
-    return peer;
-  };
-
-  const addPeer = (
-    incomingSignal: Peer.SignalData,
-    callerID: string,
-    stream: MediaStream | undefined
-  ) => {
-    if (typeof stream === "undefined")
-      console.warn("Media stream is undefined");
-    const peer = new Peer({
-      initiator: false,
-      trickle: false,
-      stream,
-    });
-    peer.on("signal", (signal) => {
-      socket?.emit("returning_signal", { signal, callerID });
-    });
-    peer.signal(incomingSignal);
-    return peer;
-  };
-
-  const Video = ({
-    peer,
-    userData,
-  }: {
-    peer: Peer.Instance;
-    userData: IUser | undefined;
-  }) => {
-    const ref = useRef<HTMLVideoElement>(null);
-    const [streaming, setStreaming] = useState(false);
-    const handleStream = useCallback((stream: MediaStream) => {
-      if (ref.current) {
-        ref.current.srcObject = stream;
-        setStreaming(true);
-      }
-    }, []);
-    useEffect(() => {
-      peer.on("stream", handleStream);
-    }, [peer]);
-    return (
-      <div className={classes.container}>
-        <video
-          style={
-            streaming ? { filter: "opacity(1)" } : { filter: "opacity(0)" }
-          }
-          autoPlay
-          className={classes.video}
-          ref={ref}
-        />
-        <ImSpinner8
-          style={
-            streaming ? { filter: "opacity(0)" } : { filter: "opacity(1)" }
-          }
-          className={classes.spinner}
-        />
-        <div className={classes.text}>{userData && userData.name}</div>
-      </div>
-    );
-  };
-
-  const handleServerMsgToRoom = (msg: string) =>
-    addMsg({ msg, author: "server", createdAt: new Date() });
-  const handleClientMsgToRoom = (data: {
-    msg: string;
-    createdAt: string;
-    author: string;
-  }) => {
-    addMsg(data);
-  };
-  const addMsg = useCallback(
-    (data: { msg: string; author: string; createdAt: string | Date }) => {
-      setMessages((oldMsgs) => [
-        ...oldMsgs,
-        {
-          ...data,
-          createdAt:
-            typeof data.createdAt === "string"
-              ? new Date(data.createdAt)
-              : data.createdAt,
-        },
-      ]);
-      msgsBtmRef.current?.scrollIntoView({ behavior: "auto" });
+  const createPeer = useCallback(
+    (
+      userToSignal: string,
+      callerID: string,
+      stream: MediaStream | undefined
+    ) => {
+      if (typeof stream === "undefined")
+        console.warn("Media stream is undefined");
+      const peer = new Peer({
+        initiator: true,
+        trickle: false,
+        stream,
+      });
+      peer.on("signal", (signal) => {
+        socket?.emit("sending_signal", { userToSignal, callerID, signal });
+      });
+      peer.on("disconnect", () => {
+        peer.destroy();
+      });
+      return peer;
     },
     []
   );
-  const [messages, setMessages] = useState<IParsedRoomMsg[]>([]);
-  const [messageInput, setMessageInput] = useState("");
-  const handleSubmitMessage = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      socket?.emit("msg_to_room", { msg: messageInput, roomID: `${roomID}` });
-      addMsg({
-        msg: messageInput,
-        author: user.id,
-        createdAt: new Date(),
+
+  const addPeer = useCallback(
+    (
+      incomingSignal: Peer.SignalData,
+      callerID: string,
+      stream: MediaStream | undefined
+    ) => {
+      if (typeof stream === "undefined")
+        console.warn("Media stream is undefined");
+      const peer = new Peer({
+        initiator: false,
+        trickle: false,
+        stream,
       });
+      peer.on("signal", (signal) => {
+        socket?.emit("returning_signal", { signal, callerID });
+      });
+      peer.on("disconnect", () => {
+        peer.destroy();
+      });
+      peer.signal(incomingSignal);
+      return peer;
     },
-    [messageInput]
+    []
   );
 
-  const msgFormRef = useRef<HTMLFormElement>(null);
-  const msgsBtmRef = useRef<HTMLDivElement>(null);
   return (
     <div className={classes.container}>
       <div className={classes.chatWindow}>
-        <div className={classes.messenger}>
-          <div className={classes.list}>
-            {messages &&
-              messages.map((msg: any) => (
-                <div
-                  key={msg.author + msg.createdAt}
-                  className={classes.message}
-                >
-                  <User
-                    customDate={msg.createdAt}
-                    userData={findUserData(msg.author)}
-                  />
-                  <div className={classes.content}>{msg.msg}</div>
-                </div>
-              ))}
-            <div ref={msgsBtmRef} style={{ height: "0px", width: "100%" }} />
-          </div>
-          <form ref={msgFormRef} onSubmit={handleSubmitMessage}>
-            <input
-              value={messageInput}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setMessageInput(e.target.value)
-              }
-              type="text"
-              required
-            />
-            <MdSend onClick={() => msgFormRef.current?.requestSubmit()} />
-          </form>
-        </div>
+        {peers.length} | {peersRef.current.length}
+        <Messenger />
         <div className={classes.videos}>
           <div className={classes.container}>
             <video
@@ -338,10 +217,10 @@ function Chat() {
               className={classes.spinner}
             />
           </div>
-          {peers.map((peer: any) => (
+          {peers.map((peer: any, index: number) => (
             <Video
               userData={findUserData(peer.peerUID)}
-              key={peer.peerID}
+              key={peer.peerUID}
               peer={peer.peer}
             />
           ))}

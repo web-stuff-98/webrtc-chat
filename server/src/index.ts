@@ -104,6 +104,7 @@ io.on("connection", (socket) => {
         }))
         .filter((ids) => ids.sid !== socket.id);
       socket.emit("all_users", sids);
+      io.to(room.id).emit("server_msg_to_room", `${socket.data.user?.name} has joined the room`)
     } else {
       io.emit("room_created", room);
     }
@@ -151,6 +152,7 @@ io.on("connection", (socket) => {
   const disconnected = () => {
     if (currentRoom) {
       socket.leave(currentRoom);
+      io.to(currentRoom).emit("server_msg_to_room", `${socket.data.user?.name} has left the room`)
       io.to(currentRoom).emit("left_room", String(socket.data.auth));
     }
     currentRoom = "";

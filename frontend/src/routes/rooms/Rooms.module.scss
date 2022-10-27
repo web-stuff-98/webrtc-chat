@@ -10,14 +10,14 @@
     .roomList {
         border: var(--border-light);
         background: var(--foreground);
-        width: calc(100% - var(--horizontal-space) * 2 - var(--padding-base) * 2);
+        width: calc(100% - var(--horizontal-space) * 2 - var(--padding-base) * 1);
         flex-grow: 1;
         border-radius: 3px;
         margin: auto;
         
         .room {
             width: 100%;
-            padding: calc(var(--padding-base) * 1);
+            padding: var(--padding-base);
             border-bottom: var(--border-pale);
             display: flex;
             justify-content: space-between;
