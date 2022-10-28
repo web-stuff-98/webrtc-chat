@@ -174,7 +174,7 @@ io.on("connection", (socket) => {
         clearInterval(checkDeletedInterval);
     };
 });
-server.listen(5000);
+server.listen(process.env.PORT || 80);
 const protectedUsers = ["test1", "test2", "test3", "test4"];
 const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
 /*
