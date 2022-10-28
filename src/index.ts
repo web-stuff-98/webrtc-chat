@@ -216,7 +216,9 @@ server.listen(process.env.PORT || 80);
 const protectedUsers = ["test1", "test2", "test3", "test4"];
 const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
 
-/*
+import redisClient from "./utils/redis";
+import { IRoom, IUser } from "./interfaces/interfaces";
+
 const cleanup = () => {
   const i = setInterval(async () => {
     const getU = await redisClient?.get("users");
@@ -249,4 +251,3 @@ const cleanup = () => {
   };
 };
 cleanup();
-*/
