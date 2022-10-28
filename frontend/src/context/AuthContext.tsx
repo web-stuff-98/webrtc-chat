@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (name: string, password: string) => {
     setResMsg({ msg: "Creating account", err: false, pen: true });
-    const res = await fetch("/api/users/register", {
+    const res = await fetch(`${process.env.NODE_ENV === "development" ? "http://localhost:5000" : ""}/api/users/register`, {
       method: "POST",
       body: JSON.stringify({ name, password }),
       headers: { "Content-type": "application/json;charset=UTF-8" },
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (name: string, password: string) => {
     setResMsg({ msg: "Logging in", err: false, pen: true });
-    const res = await fetch("/api/users/login", {
+    const res = await fetch(`${process.env.NODE_ENV === "development" ? "http://localhost:5000" : ""}/api/users/login`, {
       method: "POST",
       body: JSON.stringify({ name, password }),
       headers: { "Content-type": "application/json;charset=UTF-8" },

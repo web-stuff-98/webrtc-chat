@@ -41,7 +41,7 @@ export default function Settings() {
 
   const updatePfp = async (base64pfp: string) => {
     setResMsg({ msg: "Updating pfp", err: false, pen: true });
-    const res = await fetch(`/api/users/`, {
+    const res = await fetch(`${process.env.NODE_ENV === "development" ? "http://localhost:5000" : ""}/api/users/`, {
       method: "POST",
       body: JSON.stringify({ base64pfp }),
       headers: {

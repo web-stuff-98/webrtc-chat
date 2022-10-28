@@ -35,7 +35,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const cacheUserData = async (uid: string, force?: boolean) => {
     const found = users.find((u: IUser) => u.id === uid);
     if (found && !force) return;
-    const res = await fetch(`/api/users/${uid}`, {
+    const res = await fetch(`${process.env.NODE_ENV === "development" ? "http://localhost:5000" : ""}/api/users/${uid}`, {
       method: "GET",
       headers: { "Content-type": "application/json;charset=UTF-8" },
     });

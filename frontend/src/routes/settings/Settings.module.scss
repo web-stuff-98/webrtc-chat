@@ -53,8 +53,8 @@
 
   .deleteButtonContainer {
     box-sizing: border-box;
-    padding: 1rem;
     button {
+      text-transform: uppercase;
         background: red;
     }
   }
