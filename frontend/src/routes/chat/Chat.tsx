@@ -94,6 +94,7 @@ function Chat() {
     item?.peer.signal(payload.signal);
   };
 
+  const [cameraErrorMsg, setCameraErrorMsg] = useState("");
   const init = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -103,7 +104,9 @@ function Chat() {
       userStream.current = stream;
       userVideo.current.srcObject = stream;
       handleJoinRoom(String(roomID));
+      setCameraErrorMsg("")
     } catch (e) {
+      setCameraErrorMsg(`${e}`);
       console.warn(e);
     }
   };
@@ -231,14 +234,15 @@ function Chat() {
               playsInline
               className={classes.video}
             />
-            <ImSpinner8
+            {!cameraErrorMsg && <ImSpinner8
               style={
                 userStream.current
                   ? { filter: "opacity(0)" }
                   : { filter: "opacity(1)" }
               }
               className={classes.spinner}
-            />
+            />}
+            {cameraErrorMsg && <h3 style={{color:"red"}}>{cameraErrorMsg}</h3>}
           </div>
           {peers.map((peer: any, index: number) => (
             <Video
