@@ -38,7 +38,6 @@ const rooms_route_1 = __importDefault(require("./api/rooms.route"));
 const rooms_dao_1 = __importDefault(require("./api/dao/rooms.dao"));
 const decodeToken_1 = __importDefault(require("./utils/decodeToken"));
 const users_dao_1 = __importDefault(require("./api/dao/users.dao"));
-const redis_1 = __importDefault(require("./utils/redis"));
 app.use("/api/users", users_route_1.default);
 app.use("/api/rooms", rooms_route_1.default);
 app.get("*", (req, res) => {
@@ -178,43 +177,41 @@ io.on("connection", (socket) => {
 server.listen(5000);
 const protectedUsers = ["test1", "test2", "test3", "test4"];
 const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
+/*
 const cleanup = () => {
-    const i = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
-        const wasOpen = redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.isOpen;
-        if (!wasOpen)
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
-        const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
-        const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
-        let users = [];
-        if (getU)
-            users = JSON.parse(getU);
-        let rooms = [];
-        if (getR)
-            rooms = JSON.parse(getR);
-        for (const u of users) {
-            const uCreatedAt = new Date(u.createdAt).getTime();
-            const accountAgeSecs = (Date.now() - uCreatedAt) * 0.001;
-            if (accountAgeSecs > 1200 && !protectedUsers.includes(u.name)) {
-                users = users.filter((usr) => usr.id !== u.id);
-                usersJustDeletedByCleanup.push(u.id);
-            }
-        }
-        for (const r of rooms) {
-            const rCreatedAt = new Date(r.createdAt).getTime();
-            const roomAgeSecs = (Date.now() - rCreatedAt) * 0.001;
-            if (roomAgeSecs > 1200 && !protectedRooms.includes(r.name)) {
-                rooms = rooms.filter((room) => room.id !== r.id);
-                roomsJustDeletedByCleanup.push(r.id);
-            }
-        }
-        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
-        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
-        if (!wasOpen)
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
-    }), 5000);
-    return () => {
-        clearInterval(i);
-    };
+  const i = setInterval(async () => {
+    const wasOpen = redisClient?.isOpen;
+    if (!wasOpen) await redisClient?.connect();
+    const getU = await redisClient?.get("users");
+    const getR = await redisClient?.get("rooms");
+    let users: IUser[] = [];
+    if (getU) users = JSON.parse(getU);
+    let rooms: IRoom[] = [];
+    if (getR) rooms = JSON.parse(getR);
+    for (const u of users) {
+      const uCreatedAt = new Date(u.createdAt).getTime();
+      const accountAgeSecs = (Date.now() - uCreatedAt) * 0.001;
+      if (accountAgeSecs > 1200 && !protectedUsers.includes(u.name)) {
+        users = users.filter((usr: IUser) => usr.id !== u.id);
+        usersJustDeletedByCleanup.push(u.id);
+      }
+    }
+    for (const r of rooms) {
+      const rCreatedAt = new Date(r.createdAt).getTime();
+      const roomAgeSecs = (Date.now() - rCreatedAt) * 0.001;
+      if (roomAgeSecs > 1200 && !protectedRooms.includes(r.name)) {
+        rooms = rooms.filter((room: IRoom) => room.id !== r.id);
+        roomsJustDeletedByCleanup.push(r.id);
+      }
+    }
+    await redisClient?.set("rooms", JSON.stringify(rooms));
+    await redisClient?.set("users", JSON.stringify(users));
+    if (!wasOpen) await redisClient?.disconnect();
+  }, 5000);
+  return () => {
+    clearInterval(i);
+  };
 };
 cleanup();
+*/ 
 //# sourceMappingURL=index.js.map

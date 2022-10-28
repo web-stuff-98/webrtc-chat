@@ -210,6 +210,7 @@ server.listen(5000);
 const protectedUsers = ["test1", "test2", "test3", "test4"];
 const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
 
+/*
 const cleanup = () => {
   const i = setInterval(async () => {
     const wasOpen = redisClient?.isOpen;
@@ -245,3 +246,4 @@ const cleanup = () => {
   };
 };
 cleanup();
+*/
