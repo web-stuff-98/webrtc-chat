@@ -20,9 +20,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   const connectSocket = () => {
-    const connection = io("http://localhost:5000", {
-      auth: { token: user.token },
-    }).connect();
+    const connection = io(
+      process.env.NODE_ENV === "production"
+        ? "https://webrtc-chat-js.herokuapp.com"
+        : "http://localhost:5000",
+      {
+        auth: { token: user.token },
+      }
+    ).connect();
     setSocket(connection);
   };
 

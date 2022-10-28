@@ -41,7 +41,7 @@ export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const getRooms = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/rooms", {
+      const res = await fetch("/api/rooms", {
         method: "GET",
         headers: {
           "Content-type": "application/json",
