@@ -45,7 +45,7 @@
         font-family: var(--font-heading);
       }
       .hint {
-      line-height: 0.866;
+        line-height: 0.866;
         font-size: 1rem;
       }
     }
@@ -53,9 +53,10 @@
 
   .deleteButtonContainer {
     box-sizing: border-box;
+    margin-top: 0.5rem;
     button {
       text-transform: uppercase;
-        background: red;
+      background: red;
     }
   }
 }

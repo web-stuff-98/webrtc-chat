@@ -11,7 +11,7 @@ import Messenger from "./Messenger";
 import Video from "./Video";
 
 //This is how you fix it... found out after trying for days.
-import * as process from 'process';
+import * as process from "process";
 (window as any).process = process;
 
 interface PeerWithIDs {
@@ -36,8 +36,8 @@ function Chat() {
       p.peer.destroy();
     }
     socket?.emit("leave_room");
-    peersRef.current = []
-    setPeers([])
+    peersRef.current = [];
+    setPeers([]);
   };
 
   const handleJoinRoom = (roomID: string) => {
@@ -142,6 +142,28 @@ function Chat() {
       initiator: true,
       trickle: false,
       stream,
+      config: {
+        iceServers: [
+          {
+            urls: "stun:openrelay.metered.ca:80",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:80",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443?transport=tcp",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+        ],
+      },
     });
     peer.on("signal", (signal) => {
       socket?.emit("sending_signal", { userToSignal, callerID, signal });
@@ -160,6 +182,28 @@ function Chat() {
       initiator: false,
       trickle: false,
       stream,
+      config: {
+        iceServers: [
+          {
+            urls: "stun:openrelay.metered.ca:80",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:80",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443?transport=tcp",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+        ],
+      },
     });
     peer.on("signal", (signal) => {
       socket?.emit("returning_signal", { signal, callerID });
