@@ -97,6 +97,9 @@ io.on("connection", (socket) => {
 
   socket.on("delete_account", async () => {
     try {
+      if (protectedUsers.includes(String(socket.data.user?.name))) {
+        throw new Error("You cannot delete the example accounts.");
+      }
       const deletedRooms = await UsersDAO.deleteAccount(
         String(socket.data.auth)
       );

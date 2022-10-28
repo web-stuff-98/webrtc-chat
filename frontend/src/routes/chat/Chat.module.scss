@@ -32,6 +32,16 @@
         width: 26.666vh;
         height: 20vh;
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+
+h3 {
+  margin: 0;
+  line-height: 1;
+}
 
         .spinner {
           position: absolute;
@@ -41,6 +51,14 @@
           top: calc(50% - 1rem);
           animation: spin 275ms linear infinite;
           transition: filter 150ms ease;
+        }
+
+        .err {
+          fill:red;
+          color:red;
+          min-width: 2.33rem;
+          min-height: 2.33rem;
+          margin: 0;
         }
 
         @keyframes spin {

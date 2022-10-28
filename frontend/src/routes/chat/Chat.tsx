@@ -12,6 +12,7 @@ import Video from "./Video";
 
 //This is how you fix it... found out after trying for days.
 import * as process from "process";
+import { BiErrorCircle } from "react-icons/bi";
 (window as any).process = process;
 
 interface PeerWithIDs {
@@ -106,8 +107,10 @@ function Chat() {
       handleJoinRoom(String(roomID));
       setCameraErrorMsg("")
     } catch (e) {
-      setCameraErrorMsg(`${e}`);
+      const msg = `${e}`.split(": ")[1]
+      setCameraErrorMsg(msg === "Permission denied by system" ? "Permission to access the camera was denied by your system. If you still get this error after allowing access try using firefox. Other users will see a spinning loading icon inplace of your stream." : msg);
       console.warn(e);
+      handleJoinRoom(String(roomID));
     }
   };
 
@@ -242,9 +245,10 @@ function Chat() {
               }
               className={classes.spinner}
             />}
+            {cameraErrorMsg && <BiErrorCircle className={classes.err} />}
             {cameraErrorMsg && <h3 style={{color:"red"}}>{cameraErrorMsg}</h3>}
           </div>
-          {peers.map((peer: any, index: number) => (
+          {peers.map((peer: any) => (
             <Video
               userData={findUserData(peer.peerUID)}
               key={peer.peerUID}
