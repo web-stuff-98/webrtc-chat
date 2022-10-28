@@ -25,12 +25,27 @@ class UsersDAO {
     throw new Error("No user found");
   }
 
-  static async register(name: string, password: string) {
+  static async register(name: string, password: string, ip: string) {
     await redisClient?.connect();
     const getU = await redisClient?.get("users");
+    const IPRateLimit = await redisClient?.get(ip);
+    let IPRateLimitData: any = {};
     let users: IUser[] = [];
     if (getU) {
       users = JSON.parse(getU);
+    }
+    if (IPRateLimit) {
+      IPRateLimitData = JSON.parse(IPRateLimit);
+      if (IPRateLimitData.accounts === 4) {
+        await redisClient?.disconnect();
+        throw new Error("Max 4 accounts");
+      }
+      IPRateLimitData = {
+        ...IPRateLimitData,
+        accounts: IPRateLimitData.accounts + 1,
+      };
+    } else {
+      IPRateLimitData = { accounts: 1 };
     }
     if (users.find((u: IUser) => u.name.toLowerCase() === name)) {
       await redisClient?.disconnect();
@@ -46,6 +61,7 @@ class UsersDAO {
     };
     users.push(createdUser);
     await redisClient?.set("users", JSON.stringify(users));
+    await redisClient?.set(ip, JSON.stringify(IPRateLimitData));
     await redisClient?.disconnect();
     return createdUser;
   }
@@ -110,11 +126,13 @@ class UsersDAO {
     const u = users.find((user: IUser) => user.id === uid);
     if (u) {
       users = users.filter((user: IUser) => user.id !== uid);
-      const usersRooms = rooms.filter((room:IRoom) => room.author === uid).map((usersRoom) => usersRoom.id)
+      const usersRooms = rooms
+        .filter((room: IRoom) => room.author === uid)
+        .map((usersRoom) => usersRoom.id);
       rooms = rooms.filter((r: IRoom) => r.author !== uid);
       await redisClient?.set("users", JSON.stringify(users));
       await redisClient?.set("rooms", JSON.stringify(rooms));
-      return usersRooms
+      return usersRooms;
     }
     await redisClient?.disconnect();
   }

@@ -1,5 +1,6 @@
-import { IParsedRoomMsg } from "../../../../server/src/interfaces/interfaces";
 import classes from "./Chat.module.scss";
+
+import { IParsedRoomMsg } from "../../interfaces/interfaces";
 
 import {
   FormEvent,

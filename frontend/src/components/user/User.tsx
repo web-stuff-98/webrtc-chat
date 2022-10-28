@@ -1,4 +1,4 @@
-import { IUser } from "../../../../server/src/interfaces/interfaces";
+import { IUser } from "../../interfaces/interfaces";
 
 import classes from "./User.module.scss";
 

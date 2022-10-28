@@ -2,6 +2,7 @@ import { Response, Request } from "express";
 import UsersDAO from "../dao/users.dao";
 
 import jwt from "jsonwebtoken";
+import { getIpFromRequest } from "../../index";
 
 class UsersController {
   static async login(req: Request, res: Response) {
@@ -17,7 +18,8 @@ class UsersController {
     try {
       if(req.body.name > 24) throw new Error("Username too long. Max 24 characters.")
       if(req.body.password > 100) throw new Error("Password too long. Max 100 characters.")
-      const user = await UsersDAO.register(req.body.name, req.body.password);
+      const ip = getIpFromRequest(req)
+      const user = await UsersDAO.register(req.body.name, req.body.password, ip);
       const token = jwt.sign(user.id, process.env.JWT_SECRET!);
       res.status(201).json({ ...user, token });
     } catch (e) {

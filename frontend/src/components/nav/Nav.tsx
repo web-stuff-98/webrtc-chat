@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { IUser } from "../../../../server/src/interfaces/interfaces";
+import { IUser } from "../../interfaces/interfaces";
 import useAuth from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
 import useUsers from "../../context/UserContext";

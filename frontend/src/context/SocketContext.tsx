@@ -6,7 +6,7 @@ import { io, Socket } from "socket.io-client";
 import {
   ServerToClientEvents,
   ClientToServerEvents,
-} from "../../../server/src/socket-interface";
+} from "../../../src/socket-interface";
 import useAuth from "./AuthContext";
 
 const SocketContext = createContext<{
@@ -20,7 +20,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   const connectSocket = () => {
-    console.log("Connect socket");
     const connection = io("http://localhost:5000", {
       auth: { token: user.token },
     }).connect();

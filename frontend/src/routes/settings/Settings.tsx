@@ -1,6 +1,6 @@
 import classes from "./Settings.module.scss";
 import formClasses from "../../FormClasses.module.scss";
-import { IResMsg, IUser } from "../../../../server/src/interfaces/interfaces";
+import { IResMsg, IUser } from "../../interfaces/interfaces";
 
 import { useEffect, useRef, ChangeEvent, useState } from "react";
 
@@ -41,7 +41,7 @@ export default function Settings() {
 
   const updatePfp = async (base64pfp: string) => {
     setResMsg({ msg: "Updating pfp", err: false, pen: true });
-    const res = await fetch(`http://localhost:5000/users/`, {
+    const res = await fetch(`http://localhost:5000/api/users/`, {
       method: "POST",
       body: JSON.stringify({ base64pfp }),
       headers: {

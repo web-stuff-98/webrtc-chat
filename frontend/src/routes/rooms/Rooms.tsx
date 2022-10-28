@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { BsDoorOpen } from "react-icons/bs";
 import { useSocket } from "../../context/SocketContext";
 import useAuth from "../../context/AuthContext";
-import { IRoom, IUser } from "../../../../server/src/interfaces/interfaces";
+import { IRoom, IUser } from "../../interfaces/interfaces";
 import useUsers from "../../context/UserContext";
 
 export default function Rooms() {
@@ -41,7 +41,7 @@ export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const getRooms = async () => {
     try {
-      const res = await fetch("http://localhost:5000/rooms", {
+      const res = await fetch("http://localhost:5000/api/rooms", {
         method: "GET",
         headers: {
           "Content-type": "application/json",

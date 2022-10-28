@@ -39,13 +39,26 @@ class UsersDAO {
             throw new Error("No user found");
         });
     }
-    static register(name, password) {
+    static register(name, password, ip) {
         return __awaiter(this, void 0, void 0, function* () {
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
+            const IPRateLimit = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get(ip));
+            let IPRateLimitData = {};
             let users = [];
             if (getU) {
                 users = JSON.parse(getU);
+            }
+            if (IPRateLimit) {
+                IPRateLimitData = JSON.parse(IPRateLimit);
+                if (IPRateLimitData.accounts === 4) {
+                    yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+                    throw new Error("Max 4 accounts");
+                }
+                IPRateLimitData = Object.assign(Object.assign({}, IPRateLimitData), { accounts: IPRateLimitData.accounts + 1 });
+            }
+            else {
+                IPRateLimitData = { accounts: 1 };
             }
             if (users.find((u) => u.name.toLowerCase() === name)) {
                 yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
@@ -61,6 +74,7 @@ class UsersDAO {
             };
             users.push(createdUser);
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
+            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set(ip, JSON.stringify(IPRateLimitData)));
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             return createdUser;
         });
@@ -132,7 +146,9 @@ class UsersDAO {
             const u = users.find((user) => user.id === uid);
             if (u) {
                 users = users.filter((user) => user.id !== uid);
-                const usersRooms = rooms.filter((room) => room.author === uid).map((usersRoom) => usersRoom.id);
+                const usersRooms = rooms
+                    .filter((room) => room.author === uid)
+                    .map((usersRoom) => usersRoom.id);
                 rooms = rooms.filter((r) => r.author !== uid);
                 yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
                 yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));

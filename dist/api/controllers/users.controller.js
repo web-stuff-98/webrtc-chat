@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const users_dao_1 = __importDefault(require("../dao/users.dao"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const index_1 = require("../../index");
 class UsersController {
     static login(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34,7 +35,8 @@ class UsersController {
                     throw new Error("Username too long. Max 24 characters.");
                 if (req.body.password > 100)
                     throw new Error("Password too long. Max 100 characters.");
-                const user = yield users_dao_1.default.register(req.body.name, req.body.password);
+                const ip = (0, index_1.getIpFromRequest)(req);
+                const user = yield users_dao_1.default.register(req.body.name, req.body.password, ip);
                 const token = jsonwebtoken_1.default.sign(user.id, process.env.JWT_SECRET);
                 res.status(201).json(Object.assign(Object.assign({}, user), { token }));
             }

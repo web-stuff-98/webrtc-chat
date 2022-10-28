@@ -6,7 +6,7 @@ import classes from "./App.module.scss";
 import { BiErrorCircle } from "react-icons/bi";
 import { ImSpinner8 } from "react-icons/im";
 import { useSocket } from "./context/SocketContext";
-import { IResMsg } from "../../server/src/interfaces/interfaces";
+import { IResMsg } from "./interfaces/interfaces";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Login from "./routes/login/Login";

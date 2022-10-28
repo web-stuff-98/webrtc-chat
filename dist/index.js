@@ -12,17 +12,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getIpFromRequest = void 0;
 const express_1 = __importDefault(require("express"));
 const http_1 = __importDefault(require("http"));
 const cors_1 = __importDefault(require("cors"));
 const socket_io_1 = require("socket.io");
 const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: "*" }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.static(path_1.default.join(__dirname, "..", "frontend", "build")));
 const server = http_1.default.createServer(app);
+const getIpFromRequest = (req) => req.ip;
+exports.getIpFromRequest = getIpFromRequest;
 const io = new socket_io_1.Server(server, {
     cors: {
         origin: "*",
@@ -33,8 +38,12 @@ const rooms_route_1 = __importDefault(require("./api/rooms.route"));
 const rooms_dao_1 = __importDefault(require("./api/dao/rooms.dao"));
 const decodeToken_1 = __importDefault(require("./utils/decodeToken"));
 const users_dao_1 = __importDefault(require("./api/dao/users.dao"));
-app.use("/users", users_route_1.default);
-app.use("/rooms", rooms_route_1.default);
+const redis_1 = __importDefault(require("./utils/redis"));
+app.use("/api/users", users_route_1.default);
+app.use("/api/rooms", rooms_route_1.default);
+app.get("*", (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, "..", "frontend", "build", "index.html"));
+});
 const socketAuthMiddleware = (socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!socket.handshake.auth)
@@ -98,7 +107,6 @@ io.on("connection", (socket) => {
             io.emit("room_created", room);
         }
         socket === null || socket === void 0 ? void 0 : socket.emit("navigate_join_room", room.id);
-        console.log("User joined room");
         currentRoom = room.id;
     }));
     socket.on("msg_to_room", ({ msg, roomID }) => {
@@ -119,11 +127,9 @@ io.on("connection", (socket) => {
         }))
             .filter((ids) => ids.sid !== socket.id);
         socket.emit("all_users", sids);
-        console.log("User joined room");
         currentRoom = roomID;
     }));
     socket.on("sending_signal", (payload) => {
-        console.log(`Sending signal from ${payload.callerID} to ${payload.userToSignal}`);
         io.to(payload.userToSignal).emit("user_joined", {
             signal: payload.signal,
             callerID: payload.callerID,
@@ -131,7 +137,6 @@ io.on("connection", (socket) => {
         });
     });
     socket.on("returning_signal", (payload) => {
-        console.log(`Returning signal to ${payload.callerID}`);
         io.to(payload.callerID).emit("receiving_returned_signal", {
             signal: payload.signal,
             id: socket.id,
@@ -150,4 +155,40 @@ io.on("connection", (socket) => {
     socket.on("disconnect", disconnected);
 });
 server.listen(5000);
+const protectedUsers = ["test1", "test2", "test3", "test4"];
+const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
+const cleanup = () => {
+    const i = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
+        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
+        const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
+        const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
+        let users = [];
+        if (getU)
+            users = JSON.parse(getU);
+        let rooms = [];
+        if (getR)
+            rooms = JSON.parse(getR);
+        for (const u of users) {
+            const uCreatedAt = new Date(u.createdAt).getTime();
+            const accountAgeSecs = (Date.now() - uCreatedAt) * 0.001;
+            if (accountAgeSecs > 1200 && !protectedUsers.includes(u.name)) {
+                users = users.filter((usr) => usr.id !== u.id);
+            }
+        }
+        for (const r of rooms) {
+            const rCreatedAt = new Date(r.createdAt).getTime();
+            const roomAgeSecs = (Date.now() - rCreatedAt) * 0.001;
+            if (roomAgeSecs > 1200 && !protectedRooms.includes(r.name)) {
+                rooms = rooms.filter((room) => room.id !== r.id);
+            }
+        }
+        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
+        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
+        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+    }), 5000);
+    return () => {
+        clearInterval(i);
+    };
+};
+cleanup();
 //# sourceMappingURL=index.js.map

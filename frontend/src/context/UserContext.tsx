@@ -6,9 +6,8 @@ import {
   useEffect,
 } from "react";
 import type { ReactNode } from "react";
-import { IUser } from "../../../server/src/interfaces/interfaces";
-import { useSocket } from "./SocketContext";
 import useAuth from "./AuthContext";
+import { IUser } from "../interfaces/interfaces";
 
 const UsersContext = createContext<{
   users: IUser[];
@@ -36,7 +35,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const cacheUserData = async (uid: string, force?: boolean) => {
     const found = users.find((u: IUser) => u.id === uid);
     if (found && !force) return;
-    const res = await fetch(`http://localhost:5000/users/${uid}`, {
+    const res = await fetch(`http://localhost:5000/api/users/${uid}`, {
       method: "GET",
       headers: { "Content-type": "application/json;charset=UTF-8" },
     });

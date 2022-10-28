@@ -22,7 +22,7 @@ class RoomsDAO {
     }
   }
 
-  static async create(name: string, author: string, socketId:string) {
+  static async create(name: string, author: string, socketId: string) {
     await redisClient?.connect();
     const getR = await redisClient?.get("rooms");
     let rooms: IRoom[] = [];
@@ -75,6 +75,21 @@ class RoomsDAO {
       return found;
     }
     throw new Error("Could not find room");
+  }
+
+  static async deleteById(id: string) {
+    await redisClient?.connect();
+    const getR = await redisClient?.get("rooms");
+    let rooms: IRoom[] = [];
+    if (getR) {
+      rooms = JSON.parse(getR);
+    } else {
+      await redisClient?.disconnect();
+      throw new Error("There are no rooms");
+    }
+    rooms.filter((room: IRoom) => room.id !== id);
+    await redisClient?.set("rooms", JSON.stringify(rooms));
+    await redisClient?.disconnect();
   }
 }
 export default RoomsDAO;

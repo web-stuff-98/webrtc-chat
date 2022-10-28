@@ -32,9 +32,8 @@ https://www.loginradius.com/blog/engineering/how-to-fix-memory-leaks-in-react/
 function Chat() {
   const { socket } = useSocket();
   const { roomID } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const { findUserData, cacheUserData } = useUsers();
+  const navigate = useNavigate();
 
   const userStream = useRef<MediaStream>();
   const peersRef = useRef<PeerWithIDs[]>([]);
@@ -51,7 +50,6 @@ function Chat() {
   };
 
   const handleJoinRoom = (roomID: string) => {
-    console.log("Join room");
     socket?.emit("join_room", { roomID });
   };
 
@@ -61,7 +59,6 @@ function Chat() {
 
   const handleAllUsers = (ids: { sid: string; uid: string }[]) => {
     const peers: any[] = [];
-    console.log("all_users, ids : " + JSON.stringify(ids));
     ids.forEach((ids) => {
       const peer = createPeer(ids.sid, String(socket?.id), userStream.current);
       peersRef.current.push({
@@ -93,7 +90,6 @@ function Chat() {
     });
   };
   const handleLeftRoom = (uid: string) => {
-    console.log(`${uid} left the room`);
     const peerRef = peersRef.current.find((p) => p.peerUID === uid);
     peerRef?.peer.destroy();
     setPeers((peers) => peers.filter((p) => p.peerUID !== uid));
@@ -103,7 +99,6 @@ function Chat() {
   };
 
   const handleReceivingReturningSignal = (payload: any) => {
-    console.log("Receiving returning signal, payload id : " + payload.id);
     const item = peersRef.current.find((p) => p.peerID === payload.id);
     item?.peer.signal(payload.signal);
   };
@@ -158,7 +153,6 @@ function Chat() {
       stream,
     });
     peer.on("signal", (signal) => {
-      console.log("Created peer, sending signal to " + userToSignal);
       socket?.emit("sending_signal", { userToSignal, callerID, signal });
     });
     return peer;
@@ -177,7 +171,6 @@ function Chat() {
       stream,
     });
     peer.on("signal", (signal) => {
-      console.log("Added peer, returning signal");
       socket?.emit("returning_signal", { signal, callerID });
     });
     peer.signal(incomingSignal);

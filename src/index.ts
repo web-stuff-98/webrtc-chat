@@ -1,8 +1,9 @@
-import express from "express";
+import express, { response } from "express";
 import http from "http";
 import cors from "cors";
 import { RemoteSocket, Server } from "socket.io";
 import dotenv from "dotenv";
+import path from "path";
 dotenv.config();
 
 import {
@@ -16,8 +17,11 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
 
 const server = http.createServer(app);
+
+export const getIpFromRequest = (req: any) => req.ip;
 
 const io = new Server<
   ClientToServerEvents,
@@ -36,9 +40,15 @@ import rooms from "./api/rooms.route";
 import RoomsDAO from "./api/dao/rooms.dao";
 import decodeToken from "./utils/decodeToken";
 import UsersDAO from "./api/dao/users.dao";
+import redisClient from "./utils/redis";
+import { IRoom, IUser } from "./interfaces/interfaces";
 
-app.use("/users", users);
-app.use("/rooms", rooms);
+app.use("/api/users", users);
+app.use("/api/rooms", rooms);
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "frontend", "build", "index.html"));
+});
 
 const socketAuthMiddleware = async (socket: any, next: any) => {
   try {
@@ -57,8 +67,30 @@ const socketAuthMiddleware = async (socket: any, next: any) => {
 
 io.use(socketAuthMiddleware);
 
+let usersJustDeletedByCleanup: string[] = [];
+let roomsJustDeletedByCleanup: string[] = [];
+
 io.on("connection", (socket) => {
   let currentRoom = "";
+
+  const checkDeletedInterval = setInterval(async () => {
+    if (usersJustDeletedByCleanup.includes(String(socket.data.auth))) {
+      socket.emit("account_deleted");
+      usersJustDeletedByCleanup.filter(
+        (uid: string) => uid !== socket.data.auth
+      );
+      socket.disconnect();
+    }
+    if (currentRoom && roomsJustDeletedByCleanup.includes(currentRoom)) {
+      const sids = await (await io.in(currentRoom).fetchSockets())
+        .map((s: RemoteSocket<ServerToClientEvents, SocketData>) => s.id)
+        .filter((id) => id !== socket.id);
+      disconnectFromRoom();
+      if(sids.length <= 1) {
+        await RoomsDAO.deleteById(currentRoom)
+      }
+    }
+  }, 2000);
 
   socket.on("delete_account", async () => {
     try {
@@ -112,7 +144,6 @@ io.on("connection", (socket) => {
       io.emit("room_created", room);
     }
     socket?.emit("navigate_join_room", room.id);
-    console.log("User joined room")
     currentRoom = room.id;
   });
 
@@ -125,7 +156,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join_room", async ({ roomID }) => {
-    if(currentRoom === roomID) return
+    if (currentRoom === roomID) return;
     socket.join(roomID);
     const sids = await (
       await io.in(roomID).fetchSockets()
@@ -136,12 +167,10 @@ io.on("connection", (socket) => {
       }))
       .filter((ids) => ids.sid !== socket.id);
     socket.emit("all_users", sids);
-    console.log("User joined room")
     currentRoom = roomID;
   });
 
   socket.on("sending_signal", (payload: any) => {
-    console.log(`Sending signal from ${payload.callerID} to ${payload.userToSignal}`)
     io.to(payload.userToSignal).emit("user_joined", {
       signal: payload.signal,
       callerID: payload.callerID,
@@ -150,14 +179,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("returning_signal", (payload: any) => {
-    console.log(`Returning signal to ${payload.callerID}`)
     io.to(payload.callerID).emit("receiving_returned_signal", {
       signal: payload.signal,
       id: socket.id,
     });
   });
 
-  const disconnected = () => {
+  const disconnectFromRoom = () => {
     if (currentRoom) {
       socket.leave(currentRoom);
       io.to(currentRoom).emit(
@@ -169,7 +197,50 @@ io.on("connection", (socket) => {
     currentRoom = "";
   };
 
-  socket.on("leave_room", disconnected);
-  socket.on("disconnect", disconnected);
+  socket.on("leave_room", disconnectFromRoom);
+  socket.on("disconnect", disconnectFromRoom);
+
+  return () => {
+    clearInterval(checkDeletedInterval);
+  };
 });
+
 server.listen(5000);
+
+const protectedUsers = ["test1", "test2", "test3", "test4"];
+const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
+
+const cleanup = () => {
+  const i = setInterval(async () => {
+    await redisClient?.connect();
+    const getU = await redisClient?.get("users");
+    const getR = await redisClient?.get("rooms");
+    let users: IUser[] = [];
+    if (getU) users = JSON.parse(getU);
+    let rooms: IRoom[] = [];
+    if (getR) rooms = JSON.parse(getR);
+    for (const u of users) {
+      const uCreatedAt = new Date(u.createdAt).getTime();
+      const accountAgeSecs = (Date.now() - uCreatedAt) * 0.001;
+      if (accountAgeSecs > 1200 && !protectedUsers.includes(u.name)) {
+        users = users.filter((usr: IUser) => usr.id !== u.id);
+        usersJustDeletedByCleanup.push(u.id);
+      }
+    }
+    for (const r of rooms) {
+      const rCreatedAt = new Date(r.createdAt).getTime();
+      const roomAgeSecs = (Date.now() - rCreatedAt) * 0.001;
+      if (roomAgeSecs > 1200 && !protectedRooms.includes(r.name)) {
+        rooms = rooms.filter((room: IRoom) => room.id !== r.id);
+        roomsJustDeletedByCleanup.push(r.id);
+      }
+    }
+    await redisClient?.set("rooms", JSON.stringify(rooms));
+    await redisClient?.set("users", JSON.stringify(users));
+    await redisClient?.disconnect();
+  }, 5000);
+  return () => {
+    clearInterval(i);
+  };
+};
+cleanup();
