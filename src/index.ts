@@ -1,4 +1,4 @@
-import express, { response } from "express";
+import express from "express";
 import http from "http";
 import cors from "cors";
 import { RemoteSocket, Server } from "socket.io";
@@ -13,8 +13,13 @@ import {
   SocketData,
 } from "./socket-interface";
 
+const origin =
+  process.env.NODE_ENV === "production"
+    ? "https://webrtc-chat-js.herokuapp.com/"
+    : "*";
+
 const app = express();
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
@@ -30,7 +35,7 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin: "*",
+    origin,
   },
 });
 
@@ -40,8 +45,6 @@ import rooms from "./api/rooms.route";
 import RoomsDAO from "./api/dao/rooms.dao";
 import decodeToken from "./utils/decodeToken";
 import UsersDAO from "./api/dao/users.dao";
-import redisClient from "./utils/redis";
-import { IRoom, IUser } from "./interfaces/interfaces";
 
 app.use("/api/users", users);
 app.use("/api/rooms", rooms);
