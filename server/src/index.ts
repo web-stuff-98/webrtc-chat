@@ -104,11 +104,15 @@ io.on("connection", (socket) => {
         }))
         .filter((ids) => ids.sid !== socket.id);
       socket.emit("all_users", sids);
-      io.to(room.id).emit("server_msg_to_room", `${socket.data.user?.name} has joined the room`)
+      io.to(room.id).emit(
+        "server_msg_to_room",
+        `${socket.data.user?.name} has joined the room`
+      );
     } else {
       io.emit("room_created", room);
     }
     socket?.emit("navigate_join_room", room.id);
+    console.log("User joined room")
     currentRoom = room.id;
   });
 
@@ -121,6 +125,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join_room", async ({ roomID }) => {
+    if(currentRoom === roomID) return
     socket.join(roomID);
     const sids = await (
       await io.in(roomID).fetchSockets()
@@ -131,10 +136,12 @@ io.on("connection", (socket) => {
       }))
       .filter((ids) => ids.sid !== socket.id);
     socket.emit("all_users", sids);
+    console.log("User joined room")
     currentRoom = roomID;
   });
 
   socket.on("sending_signal", (payload: any) => {
+    console.log(`Sending signal from ${payload.callerID} to ${payload.userToSignal}`)
     io.to(payload.userToSignal).emit("user_joined", {
       signal: payload.signal,
       callerID: payload.callerID,
@@ -143,6 +150,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("returning_signal", (payload: any) => {
+    console.log(`Returning signal to ${payload.callerID}`)
     io.to(payload.callerID).emit("receiving_returned_signal", {
       signal: payload.signal,
       id: socket.id,
@@ -152,7 +160,10 @@ io.on("connection", (socket) => {
   const disconnected = () => {
     if (currentRoom) {
       socket.leave(currentRoom);
-      io.to(currentRoom).emit("server_msg_to_room", `${socket.data.user?.name} has left the room`)
+      io.to(currentRoom).emit(
+        "server_msg_to_room",
+        `${socket.data.user?.name} has left the room`
+      );
       io.to(currentRoom).emit("left_room", String(socket.data.auth));
     }
     currentRoom = "";

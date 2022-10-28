@@ -98,6 +98,7 @@ io.on("connection", (socket) => {
             io.emit("room_created", room);
         }
         socket === null || socket === void 0 ? void 0 : socket.emit("navigate_join_room", room.id);
+        console.log("User joined room");
         currentRoom = room.id;
     }));
     socket.on("msg_to_room", ({ msg, roomID }) => {
@@ -108,6 +109,8 @@ io.on("connection", (socket) => {
         });
     });
     socket.on("join_room", ({ roomID }) => __awaiter(void 0, void 0, void 0, function* () {
+        if (currentRoom === roomID)
+            return;
         socket.join(roomID);
         const sids = yield (yield io.in(roomID).fetchSockets())
             .map((s) => ({
@@ -116,9 +119,11 @@ io.on("connection", (socket) => {
         }))
             .filter((ids) => ids.sid !== socket.id);
         socket.emit("all_users", sids);
+        console.log("User joined room");
         currentRoom = roomID;
     }));
     socket.on("sending_signal", (payload) => {
+        console.log(`Sending signal from ${payload.callerID} to ${payload.userToSignal}`);
         io.to(payload.userToSignal).emit("user_joined", {
             signal: payload.signal,
             callerID: payload.callerID,
@@ -126,6 +131,7 @@ io.on("connection", (socket) => {
         });
     });
     socket.on("returning_signal", (payload) => {
+        console.log(`Returning signal to ${payload.callerID}`);
         io.to(payload.callerID).emit("receiving_returned_signal", {
             signal: payload.signal,
             id: socket.id,

@@ -17,8 +17,8 @@ const AuthContext = createContext<
   register: () => {},
   login: () => {},
   logout: () => {},
-  resMsg: { msg: "", err: false, pen: false },
   clrMsg: () => {},
+  resMsg: { msg: "", err: false, pen: false },
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -63,7 +63,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => setUser(null)
+  const logout = () => {
+    setUser(null);
+  };
 
   return (
     <AuthContext.Provider

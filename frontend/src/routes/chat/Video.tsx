@@ -14,17 +14,17 @@ export default function Video({
   userData?: IUser;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const handleStream = useCallback((stream: MediaStream) => {
-    if (ref.current) {
-      ref.current.srcObject = stream;
-      setStreaming(true);
-    }
-  }, []);
   const [streaming, setStreaming] = useState(false);
   useEffect(() => {
+    const handleStream = (stream: MediaStream) => {
+      if (ref.current && stream) {
+        ref.current.srcObject = stream;
+        setStreaming(true);
+      }
+    }
     peer.on("stream", handleStream);
     return () => {
-        peer.off("stream", handleStream)
+      peer.off("stream", handleStream)
     };
   }, []);
   return (

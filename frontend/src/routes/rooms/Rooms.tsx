@@ -51,9 +51,11 @@ export default function Rooms() {
       const json = await res.json();
       if (res.ok) {
         setRooms(json);
+        let uids: string[] = [];
         for (const r of json) {
-          cacheUserData(r.author);
+          if (!uids.includes(r.author)) uids.push(r.author);
         }
+        await Promise.all(uids.map((uid: string) => cacheUserData(uid)));
       }
     } catch (e) {
       console.error(e);
@@ -61,7 +63,11 @@ export default function Rooms() {
   };
 
   useEffect(() => {
+    let abort = new AbortController();
     getRooms();
+    return () => {
+      abort.abort();
+    };
   }, []);
 
   useEffect(() => {

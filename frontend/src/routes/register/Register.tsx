@@ -20,7 +20,7 @@ export default function Register() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const res = await register(username, password);
+      await register(username, password);
     } catch (error) {
       console.error(e);
     }

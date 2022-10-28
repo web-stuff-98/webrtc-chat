@@ -52,7 +52,7 @@ input {
 
 input:focus {
   outline: none;
-  border: var(--border-base);
+  border: 1px solid rgb(64, 96, 224);
 }
 
 * {

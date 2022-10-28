@@ -5,16 +5,15 @@ import classes from "./Chat.module.scss";
 
 import { ImSpinner8 } from "react-icons/im";
 
-import {
-  IParsedRoomMsg,
-  IUser,
-} from "../../../../server/src/interfaces/interfaces";
-
 import Peer from "simple-peer";
 import useAuth from "../../context/AuthContext";
 import useUsers from "../../context/UserContext";
 import Messenger from "./Messenger";
 import Video from "./Video";
+
+//This is how you fix it... found out after trying for nearly a week.
+import * as process from 'process';
+(window as any).process = process;
 
 interface PeerWithIDs {
   peerID: string;
@@ -23,17 +22,11 @@ interface PeerWithIDs {
 }
 
 /*
-
 https://dev.to/bravemaster619/how-to-use-socket-io-client-correctly-in-react-app-o65
-
- ^ This is the solution for React triggering multiple socket emit event problems
-
-
-
 https://www.loginradius.com/blog/engineering/how-to-fix-memory-leaks-in-react/
- 
- ^ Read this too....... try it on everything.
 
+ ^ doesn't help
+   ////////////
 */
 
 function Chat() {
@@ -48,25 +41,27 @@ function Chat() {
   const [peers, setPeers] = useState<PeerWithIDs[]>([]);
   const userVideo = useRef<HTMLVideoElement | any>();
 
-  const leaveRoom = useCallback(() => {
-    socket?.emit("leave_room");
-    for (const p of peersRef.current.concat(peers)) {
+  const leaveRoom = () => {
+    for (const p of peersRef.current) {
       p.peer.destroy();
     }
-    setPeers([]);
-    peersRef.current = [];
-  }, []);
+    socket?.emit("leave_room");
+    peersRef.current = []
+    setPeers([])
+  };
 
-  const handleJoinRoom = useCallback((roomID: string) => {
+  const handleJoinRoom = (roomID: string) => {
+    console.log("Join room");
     socket?.emit("join_room", { roomID });
-  }, []);
+  };
 
-  const handleRoomDeleted = useCallback((deletedID: string) => {
+  const handleRoomDeleted = (deletedID: string) => {
     if (deletedID === roomID) leaveRoom();
-  }, []);
+  };
 
-  const handleAllUsers = useCallback((ids: { sid: string; uid: string }[]) => {
+  const handleAllUsers = (ids: { sid: string; uid: string }[]) => {
     const peers: any[] = [];
+    console.log("all_users, ids : " + JSON.stringify(ids));
     ids.forEach((ids) => {
       const peer = createPeer(ids.sid, String(socket?.id), userStream.current);
       peersRef.current.push({
@@ -78,9 +73,9 @@ function Chat() {
       peers.push({ peer, peerID: ids.sid, peerUID: ids.uid });
     });
     setPeers(peers);
-  }, []);
+  };
 
-  const handleUserJoined = useCallback((payload: any) => {
+  const handleUserJoined = (payload: any) => {
     if (
       peersRef.current.find((p: PeerWithIDs) => p.peerID === payload.callerID)
     )
@@ -96,38 +91,46 @@ function Chat() {
       peerUID: payload.callerUID,
       peer,
     });
-  }, []);
-
-  const handleLeftRoom = useCallback((uid: string) => {
-    if (uid === user.id) return;
+  };
+  const handleLeftRoom = (uid: string) => {
+    console.log(`${uid} left the room`);
     const peerRef = peersRef.current.find((p) => p.peerUID === uid);
-    if (typeof peerRef !== undefined) {
-      peerRef?.peer.destroy();
-    }
+    peerRef?.peer.destroy();
     setPeers((peers) => peers.filter((p) => p.peerUID !== uid));
     peersRef.current = peersRef.current.filter(
       (p: PeerWithIDs) => p.peerUID !== uid
     );
-  }, []);
+  };
 
-  const handleReceivingReturningSignal = useCallback((payload: any) => {
+  const handleReceivingReturningSignal = (payload: any) => {
+    console.log("Receiving returning signal, payload id : " + payload.id);
     const item = peersRef.current.find((p) => p.peerID === payload.id);
     item?.peer.signal(payload.signal);
-  }, []);
+  };
+
+  const init = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      userStream.current = stream;
+      userVideo.current.srcObject = stream;
+      handleJoinRoom(String(roomID));
+    } catch (e) {
+      console.warn(e);
+    }
+  };
 
   useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then((stream) => {
-        if (userStream) userStream.current = stream;
-        if (userVideo) userVideo.current.srcObject = stream;
-        handleJoinRoom(String(roomID));
-        socket?.on("all_users", handleAllUsers);
-        socket?.on("user_joined", handleUserJoined);
-        socket?.on("left_room", handleLeftRoom);
-        socket?.on("receiving_returned_signal", handleReceivingReturningSignal);
-      });
+    let abortController = new AbortController();
 
+    if (!userStream.current) init();
+
+    socket?.on("all_users", handleAllUsers);
+    socket?.on("user_joined", handleUserJoined);
+    socket?.on("left_room", handleLeftRoom);
+    socket?.on("receiving_returned_signal", handleReceivingReturningSignal);
     socket?.on("room_deleted", handleRoomDeleted);
 
     return () => {
@@ -137,57 +140,49 @@ function Chat() {
       socket?.off("receiving_returned_signal", handleReceivingReturningSignal);
       socket?.off("room_deleted", handleRoomDeleted);
       socket?.emit("leave_room");
+
+      abortController.abort();
     };
   }, []);
 
-  const createPeer = useCallback(
-    (
-      userToSignal: string,
-      callerID: string,
-      stream: MediaStream | undefined
-    ) => {
-      if (typeof stream === "undefined")
-        console.warn("Media stream is undefined");
-      const peer = new Peer({
-        initiator: true,
-        trickle: false,
-        stream,
-      });
-      peer.on("signal", (signal) => {
-        socket?.emit("sending_signal", { userToSignal, callerID, signal });
-      });
-      peer.on("disconnect", () => {
-        peer.destroy();
-      });
-      return peer;
-    },
-    []
-  );
+  const createPeer = (
+    userToSignal: string,
+    callerID: string,
+    stream: MediaStream | undefined
+  ) => {
+    if (typeof stream === "undefined")
+      console.warn("Media stream is undefined");
+    const peer = new Peer({
+      initiator: true,
+      trickle: false,
+      stream,
+    });
+    peer.on("signal", (signal) => {
+      console.log("Created peer, sending signal to " + userToSignal);
+      socket?.emit("sending_signal", { userToSignal, callerID, signal });
+    });
+    return peer;
+  };
 
-  const addPeer = useCallback(
-    (
-      incomingSignal: Peer.SignalData,
-      callerID: string,
-      stream: MediaStream | undefined
-    ) => {
-      if (typeof stream === "undefined")
-        console.warn("Media stream is undefined");
-      const peer = new Peer({
-        initiator: false,
-        trickle: false,
-        stream,
-      });
-      peer.on("signal", (signal) => {
-        socket?.emit("returning_signal", { signal, callerID });
-      });
-      peer.on("disconnect", () => {
-        peer.destroy();
-      });
-      peer.signal(incomingSignal);
-      return peer;
-    },
-    []
-  );
+  const addPeer = (
+    incomingSignal: Peer.SignalData,
+    callerID: string,
+    stream: MediaStream | undefined
+  ) => {
+    if (typeof stream === "undefined")
+      console.warn("Media stream is undefined");
+    const peer = new Peer({
+      initiator: false,
+      trickle: false,
+      stream,
+    });
+    peer.on("signal", (signal) => {
+      console.log("Added peer, returning signal");
+      socket?.emit("returning_signal", { signal, callerID });
+    });
+    peer.signal(incomingSignal);
+    return peer;
+  };
 
   return (
     <div className={classes.container}>

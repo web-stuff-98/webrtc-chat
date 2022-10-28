@@ -112,7 +112,7 @@ export default function Settings() {
           type="file"
           required
         />
-        {renderUserPfp(findUserData(user.id))}
+        {user && renderUserPfp(findUserData(user.id))}
       </div>
       <div className={classes.deleteButtonContainer}>
         <button onClick={() => socket?.emit("delete_account")}>
