@@ -67,8 +67,8 @@ const socketAuthMiddleware = async (socket: any, next: any) => {
 
 io.use(socketAuthMiddleware);
 
-let usersJustDeletedByCleanup: string[] = [];
-let roomsJustDeletedByCleanup: string[] = [];
+const usersJustDeletedByCleanup: string[] = [];
+const roomsJustDeletedByCleanup: string[] = [];
 
 io.on("connection", (socket) => {
   let currentRoom = "";
