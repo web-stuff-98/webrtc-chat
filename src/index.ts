@@ -86,8 +86,8 @@ io.on("connection", (socket) => {
         .map((s: RemoteSocket<ServerToClientEvents, SocketData>) => s.id)
         .filter((id) => id !== socket.id);
       disconnectFromRoom();
-      if(sids.length <= 1) {
-        await RoomsDAO.deleteById(currentRoom)
+      if (sids.length <= 1) {
+        await RoomsDAO.deleteById(currentRoom);
       }
     }
   }, 2000);
@@ -119,7 +119,7 @@ io.on("connection", (socket) => {
         room = await RoomsDAO.create(
           roomName,
           String(socket.data.auth),
-          socket.id
+          socket.handshake.address
         );
       }
     } catch (e) {

@@ -22,10 +22,25 @@ class RoomsDAO {
     }
   }
 
-  static async create(name: string, author: string, socketId: string) {
+  static async create(name: string, author: string, ip:string) {
     await redisClient?.connect();
     const getR = await redisClient?.get("rooms");
+    const IPRateLimit = await redisClient?.get(ip);
+    let IPRateLimitData: any = {};
     let rooms: IRoom[] = [];
+    if (IPRateLimit) {
+      IPRateLimitData = JSON.parse(IPRateLimit);
+      if (IPRateLimitData.rooms && IPRateLimitData.rooms === 4) {
+        await redisClient?.disconnect();
+        throw new Error("Max 4 rooms");
+      }
+      IPRateLimitData = {
+        ...IPRateLimitData,
+        rooms: IPRateLimitData.rooms + 1,
+      };
+    } else {
+      IPRateLimitData = { rooms: 1 };
+    }
     if (getR) {
       rooms = JSON.parse(getR);
       if (
@@ -45,6 +60,7 @@ class RoomsDAO {
     };
     rooms.push(room);
     await redisClient?.set("rooms", JSON.stringify(rooms));
+    await redisClient?.set(ip, JSON.stringify(IPRateLimitData));
     await redisClient?.disconnect();
     return room;
   }

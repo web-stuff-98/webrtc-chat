@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSocket } from "../../context/SocketContext";
 import classes from "./Chat.module.scss";
@@ -6,12 +6,11 @@ import classes from "./Chat.module.scss";
 import { ImSpinner8 } from "react-icons/im";
 
 import Peer from "simple-peer";
-import useAuth from "../../context/AuthContext";
 import useUsers from "../../context/UserContext";
 import Messenger from "./Messenger";
 import Video from "./Video";
 
-//This is how you fix it... found out after trying for nearly a week.
+//This is how you fix it... found out after trying for days.
 import * as process from 'process';
 (window as any).process = process;
 
@@ -20,14 +19,6 @@ interface PeerWithIDs {
   peerUID: string;
   peer: Peer.Instance;
 }
-
-/*
-https://dev.to/bravemaster619/how-to-use-socket-io-client-correctly-in-react-app-o65
-https://www.loginradius.com/blog/engineering/how-to-fix-memory-leaks-in-react/
-
- ^ doesn't help
-   ////////////
-*/
 
 function Chat() {
   const { socket } = useSocket();

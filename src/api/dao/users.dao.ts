@@ -36,7 +36,7 @@ class UsersDAO {
     }
     if (IPRateLimit) {
       IPRateLimitData = JSON.parse(IPRateLimit);
-      if (IPRateLimitData.accounts === 4) {
+      if (IPRateLimitData.accounts && IPRateLimitData.accounts === 4) {
         await redisClient?.disconnect();
         throw new Error("Max 4 accounts");
       }
