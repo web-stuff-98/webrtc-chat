@@ -13,12 +13,10 @@ import {
   SocketData,
 } from "./socket-interface";
 
-const origin = "*";
-/*
+const origin =
   process.env.NODE_ENV === "production"
     ? "https://webrtc-chat-js.herokuapp.com/"
     : "*";
-*/
 
 const app = express();
 app.use(cors({ origin }));
