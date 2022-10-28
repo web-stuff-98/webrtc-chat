@@ -180,7 +180,9 @@ const protectedUsers = ["test1", "test2", "test3", "test4"];
 const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
 const cleanup = () => {
     const i = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
-        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
+        const wasOpen = redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.isOpen;
+        if (!wasOpen)
+            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
         const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
         const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
         let users = [];
@@ -207,7 +209,8 @@ const cleanup = () => {
         }
         yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
         yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
-        yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
+        if (!wasOpen)
+            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
     }), 5000);
     return () => {
         clearInterval(i);
