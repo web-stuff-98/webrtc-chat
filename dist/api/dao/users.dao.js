@@ -19,9 +19,7 @@ const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing")
 class UsersDAO {
     static login(name, password) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             if (getU) {
                 let users = [];
                 users = JSON.parse(getU);
@@ -41,7 +39,6 @@ class UsersDAO {
     }
     static register(name, password, ip) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
             const IPRateLimit = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get(ip));
             let IPRateLimitData = {};
@@ -52,7 +49,6 @@ class UsersDAO {
             if (IPRateLimit) {
                 IPRateLimitData = JSON.parse(IPRateLimit);
                 if (IPRateLimitData.accounts && IPRateLimitData.accounts === 4) {
-                    yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                     throw new Error("Max 4 accounts");
                 }
                 IPRateLimitData = Object.assign(Object.assign({}, IPRateLimitData), { accounts: IPRateLimitData.accounts + 1 });
@@ -61,7 +57,6 @@ class UsersDAO {
                 IPRateLimitData = { accounts: 1 };
             }
             if (users.find((u) => u.name.toLowerCase() === name)) {
-                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                 throw new Error("There is a user with that name already");
             }
             const passwordHash = yield (0, bcrypt_1.hash)(password, 10);
@@ -75,15 +70,12 @@ class UsersDAO {
             users.push(createdUser);
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set(ip, JSON.stringify(IPRateLimitData)));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             return createdUser;
         });
     }
     static findById(uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             let users = [];
             if (getU) {
                 users = JSON.parse(getU);
@@ -97,14 +89,12 @@ class UsersDAO {
     }
     static updatePfp(uid, base64) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
             let users = [];
             if (getU) {
                 users = JSON.parse(getU);
             }
             else {
-                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                 throw new Error("Couldn't find user to update");
             }
             const u = users.find((user) => user.id === uid);
@@ -114,7 +104,6 @@ class UsersDAO {
             }
             catch (error) {
                 console.warn("There was an error processing an image : " + error);
-                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                 return;
             }
             if (u) {
@@ -123,12 +112,10 @@ class UsersDAO {
                 users.push(u);
                 yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("users", JSON.stringify(users)));
             }
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
         });
     }
     static deleteAccount(uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getU = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("users"));
             const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
             let users = [];
@@ -137,7 +124,6 @@ class UsersDAO {
                 users = JSON.parse(getU);
             }
             else {
-                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                 throw new Error("Couldn't find account to delete");
             }
             if (getR) {
@@ -154,7 +140,6 @@ class UsersDAO {
                 yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
                 return usersRooms;
             }
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
         });
     }
 }

@@ -1,3 +1,17 @@
+import Redis from "ioredis";
+
+const client =
+  process.env.NODE_ENV === "production"
+    ? new Redis(String(process.env.REDIS_URL), {
+        tls: {
+          rejectUnauthorized: false,
+        },
+      })
+    : new Redis();
+
+export default client;
+
+/*
 import { createClient } from "redis";
 import type { RedisClientType } from "redis";
 let redisClient: RedisClientType | null = null;
@@ -19,6 +33,5 @@ redisClient =
           },
         }
   );
-/*redisClient.on("error", (err) => {
-});*/
-export default redisClient;
+
+export default redisClient;*/

@@ -216,8 +216,6 @@ const protectedRooms = ["Room A", "Room B", "Room C", "Room D"];
 /*
 const cleanup = () => {
   const i = setInterval(async () => {
-    const wasOpen = redisClient?.isOpen;
-    if (!wasOpen) await redisClient?.connect();
     const getU = await redisClient?.get("users");
     const getR = await redisClient?.get("rooms");
     let users: IUser[] = [];
@@ -242,7 +240,6 @@ const cleanup = () => {
     }
     await redisClient?.set("rooms", JSON.stringify(rooms));
     await redisClient?.set("users", JSON.stringify(users));
-    if (!wasOpen) await redisClient?.disconnect();
   }, 5000);
   return () => {
     clearInterval(i);

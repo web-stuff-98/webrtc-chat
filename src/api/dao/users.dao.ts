@@ -6,9 +6,7 @@ import imageProcessing from "../../utils/imageProcessing";
 
 class UsersDAO {
   static async login(name: string, password: string) {
-    await redisClient?.connect();
     const getU = await redisClient?.get("users");
-    await redisClient?.disconnect();
     if (getU) {
       let users: IUser[] = [];
       users = JSON.parse(getU);
@@ -26,7 +24,6 @@ class UsersDAO {
   }
 
   static async register(name: string, password: string, ip: string) {
-    await redisClient?.connect();
     const getU = await redisClient?.get("users");
     const IPRateLimit = await redisClient?.get(ip);
     let IPRateLimitData: any = {};
@@ -37,7 +34,6 @@ class UsersDAO {
     if (IPRateLimit) {
       IPRateLimitData = JSON.parse(IPRateLimit);
       if (IPRateLimitData.accounts && IPRateLimitData.accounts === 4) {
-        await redisClient?.disconnect();
         throw new Error("Max 4 accounts");
       }
       IPRateLimitData = {
@@ -48,7 +44,6 @@ class UsersDAO {
       IPRateLimitData = { accounts: 1 };
     }
     if (users.find((u: IUser) => u.name.toLowerCase() === name)) {
-      await redisClient?.disconnect();
       throw new Error("There is a user with that name already");
     }
     const passwordHash = await hash(password, 10);
@@ -62,14 +57,11 @@ class UsersDAO {
     users.push(createdUser);
     await redisClient?.set("users", JSON.stringify(users));
     await redisClient?.set(ip, JSON.stringify(IPRateLimitData));
-    await redisClient?.disconnect();
     return createdUser;
   }
 
   static async findById(uid: string) {
-    await redisClient?.connect();
     const getU = await redisClient?.get("users");
-    await redisClient?.disconnect();
     let users: IUser[] = [];
     if (getU) {
       users = JSON.parse(getU);
@@ -81,13 +73,11 @@ class UsersDAO {
   }
 
   static async updatePfp(uid: string, base64: string) {
-    await redisClient?.connect();
     const getU = await redisClient?.get("users");
     let users: IUser[] = [];
     if (getU) {
       users = JSON.parse(getU);
     } else {
-      await redisClient?.disconnect();
       throw new Error("Couldn't find user to update");
     }
     const u = users.find((user: IUser) => user.id === uid);
@@ -96,7 +86,6 @@ class UsersDAO {
       pfp = await imageProcessing(base64, { width: 32, height: 32 });
     } catch (error) {
       console.warn("There was an error processing an image : " + error);
-      await redisClient?.disconnect();
       return;
     }
     if (u) {
@@ -105,11 +94,9 @@ class UsersDAO {
       users.push(u);
       await redisClient?.set("users", JSON.stringify(users));
     }
-    await redisClient?.disconnect();
   }
 
   static async deleteAccount(uid: string) {
-    await redisClient?.connect();
     const getU = await redisClient?.get("users");
     const getR = await redisClient?.get("rooms");
     let users: IUser[] = [];
@@ -117,7 +104,6 @@ class UsersDAO {
     if (getU) {
       users = JSON.parse(getU);
     } else {
-      await redisClient?.disconnect();
       throw new Error("Couldn't find account to delete");
     }
     if (getR) {
@@ -134,7 +120,6 @@ class UsersDAO {
       await redisClient?.set("rooms", JSON.stringify(rooms));
       return usersRooms;
     }
-    await redisClient?.disconnect();
   }
 }
 export default UsersDAO;

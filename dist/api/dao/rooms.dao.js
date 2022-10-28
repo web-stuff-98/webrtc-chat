@@ -17,9 +17,7 @@ const crypto_1 = __importDefault(require("crypto"));
 class RoomsDAO {
     static findByName(name) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             let rooms = [];
             if (getR) {
                 rooms = JSON.parse(getR);
@@ -34,7 +32,6 @@ class RoomsDAO {
     }
     static create(name, author, ip) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
             const IPRateLimit = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get(ip));
             let IPRateLimitData = {};
@@ -42,7 +39,6 @@ class RoomsDAO {
             if (IPRateLimit) {
                 IPRateLimitData = JSON.parse(IPRateLimit);
                 if (IPRateLimitData.rooms && IPRateLimitData.rooms === 4) {
-                    yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                     throw new Error("Max 4 rooms");
                 }
                 IPRateLimitData = Object.assign(Object.assign({}, IPRateLimitData), { rooms: IPRateLimitData.rooms + 1 });
@@ -53,7 +49,6 @@ class RoomsDAO {
             if (getR) {
                 rooms = JSON.parse(getR);
                 if (rooms.find((r) => r.name.toLowerCase() === name.trim().toLowerCase())) {
-                    yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                     throw new Error("There is a room with that name already");
                 }
             }
@@ -66,15 +61,12 @@ class RoomsDAO {
             rooms.push(room);
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set(ip, JSON.stringify(IPRateLimitData)));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             return room;
         });
     }
     static getAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             let rooms = [];
             if (getR) {
                 rooms = JSON.parse(getR);
@@ -84,9 +76,7 @@ class RoomsDAO {
     }
     static findById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
             let rooms = [];
             if (getR) {
                 rooms = JSON.parse(getR);
@@ -103,19 +93,16 @@ class RoomsDAO {
     }
     static deleteById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.connect());
             const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
             let rooms = [];
             if (getR) {
                 rooms = JSON.parse(getR);
             }
             else {
-                yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
                 throw new Error("There are no rooms");
             }
             rooms.filter((room) => room.id !== id);
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
-            yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.disconnect());
         });
     }
 }
