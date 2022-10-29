@@ -4,6 +4,7 @@ import { IRoom } from "../../../src/interfaces/interfaces";
 
 import { Busboy } from "busboy";
 import AWS from "aws-sdk";
+import mime from "mime-types";
 
 import { io } from "../../index";
 
@@ -100,7 +101,12 @@ class RoomsDAO {
     await redisClient?.set("rooms", JSON.stringify(rooms));
   }
 
-  static uploadAttachment(busboy: Busboy, roomID: string, msgID: string, bytes:number) {
+  static uploadAttachment(
+    busboy: Busboy,
+    roomID: string,
+    msgID: string,
+    bytes: number
+  ) {
     return new Promise<void>((resolve, reject) => {
       AWS.config.update({
         // if you are having trouble with S3 you could just save to disk and remove attachment progress until
@@ -118,15 +124,18 @@ class RoomsDAO {
         ) {
           failed(new Error("Attachment must be an image or video"));
         }
+        console.log(JSON.stringify(filename));
+        const ext = String(mime.extension(filename.mimeType));
         s3.upload(
           {
             Bucket: "webrtc-chat-js",
-            Key: `attachment.${msgID}`,
+            Key: `${msgID}.${ext}`,
             Body: file,
+            ContentType: String(mime.contentType(ext)),
           },
           (err: any, file: any) => {
             if (err) failed(err);
-            success();
+            success(filename.mimeType, ext);
           }
         ).on("httpUploadProgress", (e: AWS.S3.ManagedUpload.Progress) => {
           p++;
@@ -145,8 +154,8 @@ class RoomsDAO {
         io.to(roomID).emit("attachment_failed", msgID);
         reject(e);
       }
-      function success() {
-        io.to(roomID).emit("attachment_success", msgID);
+      function success(mimeType: string, ext: string) {
+        io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
         resolve();
       }
     });

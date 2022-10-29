@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const redis_1 = __importDefault(require("../../utils/redis"));
 const crypto_1 = __importDefault(require("crypto"));
 const aws_sdk_1 = __importDefault(require("aws-sdk"));
+const mime_types_1 = __importDefault(require("mime-types"));
 const index_1 = require("../../index");
 class RoomsDAO {
     static findByName(name) {
@@ -119,24 +120,25 @@ class RoomsDAO {
             const s3 = new aws_sdk_1.default.S3();
             let p = 0;
             busboy.on("file", (fieldname, file, filename) => {
-                console.log(filename.mimeType);
-                console.log(file);
                 if (!filename.mimeType.includes("video") &&
                     !filename.mimeType.includes("image")) {
                     failed(new Error("Attachment must be an image or video"));
                 }
+                console.log(JSON.stringify(filename));
+                const ext = String(mime_types_1.default.extension(filename.mimeType));
                 s3.upload({
                     Bucket: "webrtc-chat-js",
-                    Key: `attachment.${msgID}`,
+                    Key: `${msgID}.${ext}`,
                     Body: file,
+                    ContentType: String(mime_types_1.default.contentType(ext)),
                 }, (err, file) => {
                     if (err)
                         failed(err);
-                    success();
+                    success(filename.mimeType, ext);
                 }).on("httpUploadProgress", (e) => {
                     p++;
-                    // only send every 5th progress update, because its too many emits otherwise
-                    if (p === 5) {
+                    // only send every 2nd progress update, because its too many emits otherwise
+                    if (p === 2) {
                         p = 0;
                         index_1.io.to(roomID).emit("attachment_progress", {
                             progress: e.loaded / bytes,
@@ -150,8 +152,8 @@ class RoomsDAO {
                 index_1.io.to(roomID).emit("attachment_failed", msgID);
                 reject(e);
             }
-            function success() {
-                index_1.io.to(roomID).emit("attachment_success", msgID);
+            function success(mimeType, ext) {
+                index_1.io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
                 resolve();
             }
         });

@@ -13,7 +13,7 @@ export interface ServerToClientEvents {
   account_deleted: () => void;
   attachment_progress: (data: { progress: number; msgID: string }) => void;
   attachment_failed: (msgID:string) => void;
-  attachment_success: (msgID:string) => void;
+  attachment_success: ({msgID, mimeType, ext}:{msgID:string, mimeType:string, ext:string}) => void;
 
   // WebRTC stuff
   receiving_returned_signal: (data: { signal: any; id: string }) => void;

@@ -1,5 +1,5 @@
 import "./globals.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import classes from "./App.module.scss";
 
@@ -16,8 +16,11 @@ import Nav from "./components/nav/Nav";
 import Rooms from "./routes/rooms/Rooms";
 import Chat from "./routes/chat/Chat";
 import Settings from "./routes/settings/Settings";
+import { EModalType, useModal } from "./context/ModalContext";
 
 const App = () => {
+  const { state: mState, closeAttachment } = useModal();
+
   const { socket } = useSocket();
 
   const [resMsg, setResMsg] = useState<IResMsg>({
@@ -49,16 +52,59 @@ const App = () => {
     resized();
     window.addEventListener("resize", resized);
     const i = setInterval(() => {
-      resized()
-    }, 100)
+      resized();
+    }, 100);
     return () => {
       window.removeEventListener("resize", resized);
-      clearInterval(i)
+      clearInterval(i);
     };
   }, []);
 
+  //"https://d27jd5hhl2iqqv.cloudfront.net/3191bcce081a63069764c20e5ce9b97a.mp4"
+
+  const hiddenAttachmentDownloadTag = useRef<HTMLAnchorElement>(null);
   return (
     <div className={classes.container}>
+      {mState.showModal && (
+        <>
+          <div
+            onClick={() => closeAttachment()}
+            className={classes.modalBackdrop}
+          />
+          <div className={classes.modalContainer}>
+            <div className={classes.modal}>
+              <>
+                {mState.url}
+                {mState.modalType === EModalType.ViewAttachmentVideo && (
+                  <video src={mState.url} controls={true}/>
+                )}
+                {mState.modalType === EModalType.ViewAttachmentImage && (
+                  <img src={mState.url} />
+                )}
+                {mState.modalType === EModalType.ViewAttachmentImage && (
+                  <>
+                    <a
+                      ref={hiddenAttachmentDownloadTag}
+                      href={mState.url}
+                      style={{ display: "none" }}
+                      download
+                    />
+                    <button
+                      onClick={() => {
+                        if (hiddenAttachmentDownloadTag.current)
+                          hiddenAttachmentDownloadTag.current.click();
+                      }}
+                      className={classes.downloadButton}
+                    >
+                      Download attachment
+                    </button>
+                  </>
+                )}
+              </>
+            </div>
+          </div>
+        </>
+      )}
       {resMsg.msg && (
         <div className={classes.messageModal}>
           <div className={classes.modal}>

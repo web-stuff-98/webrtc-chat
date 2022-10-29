@@ -5,10 +5,60 @@
     filter:drop-shadow(var(--box-shadow-base));
     flex-direction: column;
     align-items: center;
+
+    .modalBackdrop {
+        z-index: 98;
+        left:0;
+        top:0;
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        background: rgba(0, 0, 0, 0.166);
+    }
+    .modalContainer {
+        position: fixed;
+        left:0; top:0;
+        width: 100%;
+        height: 100%;
+        z-index: 99;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        .modal {
+            pointer-events: all;
+            background: var(--foreground);
+            border: var(--border-base);
+            box-shadow: var(--box-shadow-base);
+            border-radius: 3px;
+            padding: var(--padding-base);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--padding-base);
+
+            .downloadButton {
+                background: green;
+                text-shadow: 0px 2px 3px black;
+                width: 100%;
+            }
+
+            img {
+                max-width: 90vw;
+                width: 35rem;
+                height: auto;
+                object-fit: scale-down;
+                object-position: center;
+                border-radius: 3px;
+            }
+        }
+    }
     
     .messageModal {
         position: fixed;
-        z-index: 98;
+        z-index: 100;
         width: 100%;
         height: 100%;
         left: 0;

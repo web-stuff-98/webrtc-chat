@@ -10,7 +10,8 @@ import useUsers from "../../context/UserContext";
 import Messenger from "./Messenger";
 import Video from "./Video";
 
-//This is how you fix it... found out after trying for days.
+// This is how you fix it... found out after trying for days. you npm i process and declare it on the
+// window so you don't get process is not defined error.
 import * as process from "process";
 import { BiErrorCircle } from "react-icons/bi";
 (window as any).process = process;
@@ -44,7 +45,6 @@ function Chat() {
   const handleJoinRoom = (roomID: string) => {
     socket?.emit("join_room", { roomID });
   };
-
   const handleRoomDeleted = (deletedID: string) => {
     if (deletedID === roomID) leaveRoom();
   };
@@ -63,7 +63,6 @@ function Chat() {
     });
     setPeers(peers);
   };
-
   const handleUserJoined = (payload: any) => {
     if (
       peersRef.current.find((p: PeerWithIDs) => p.peerID === payload.callerID)
@@ -89,53 +88,10 @@ function Chat() {
       (p: PeerWithIDs) => p.peerUID !== uid
     );
   };
-
   const handleReceivingReturningSignal = (payload: any) => {
     const item = peersRef.current.find((p) => p.peerID === payload.id);
     item?.peer.signal(payload.signal);
   };
-
-  const [cameraErrorMsg, setCameraErrorMsg] = useState("");
-  const init = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-      userStream.current = stream;
-      userVideo.current.srcObject = stream;
-      handleJoinRoom(String(roomID));
-      setCameraErrorMsg("")
-    } catch (e) {
-      const msg = `${e}`.split(": ")[1]
-      setCameraErrorMsg(msg === "Permission denied by system" ? "Permission to access the camera was denied by your system. If you still get this error after allowing access try using firefox. Other users will see a spinning loading icon inplace of your stream." : msg);
-      console.warn(e);
-      handleJoinRoom(String(roomID));
-    }
-  };
-
-  useEffect(() => {
-    let abortController = new AbortController();
-
-    if (!userStream.current) init();
-
-    socket?.on("all_users", handleAllUsers);
-    socket?.on("user_joined", handleUserJoined);
-    socket?.on("left_room", handleLeftRoom);
-    socket?.on("receiving_returned_signal", handleReceivingReturningSignal);
-    socket?.on("room_deleted", handleRoomDeleted);
-
-    return () => {
-      socket?.off("all_users", handleAllUsers);
-      socket?.off("user_joined", handleUserJoined);
-      socket?.off("left_room", handleLeftRoom);
-      socket?.off("receiving_returned_signal", handleReceivingReturningSignal);
-      socket?.off("room_deleted", handleRoomDeleted);
-      socket?.emit("leave_room");
-
-      abortController.abort();
-    };
-  }, []);
 
   const createPeer = (
     userToSignal: string,
@@ -176,7 +132,6 @@ function Chat() {
     });
     return peer;
   };
-
   const addPeer = (
     incomingSignal: Peer.SignalData,
     callerID: string,
@@ -218,6 +173,52 @@ function Chat() {
     return peer;
   };
 
+  const [cameraErrorMsg, setCameraErrorMsg] = useState("");
+  const init = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      userStream.current = stream;
+      userVideo.current.srcObject = stream;
+      handleJoinRoom(String(roomID));
+      setCameraErrorMsg("");
+    } catch (e) {
+      const msg = `${e}`.split(": ")[1];
+      setCameraErrorMsg(
+        msg === "Permission denied by system"
+          ? "Permission to access the camera was denied by your system. If you still get this error after allowing access try using firefox. Other users will see a spinning loading icon inplace of your stream."
+          : msg
+      );
+      console.warn(e);
+      handleJoinRoom(String(roomID));
+    }
+  };
+
+  useEffect(() => {
+    let abortController = new AbortController();
+
+    if (!userStream.current) init();
+
+    socket?.on("all_users", handleAllUsers);
+    socket?.on("user_joined", handleUserJoined);
+    socket?.on("left_room", handleLeftRoom);
+    socket?.on("receiving_returned_signal", handleReceivingReturningSignal);
+    socket?.on("room_deleted", handleRoomDeleted);
+
+    return () => {
+      socket?.off("all_users", handleAllUsers);
+      socket?.off("user_joined", handleUserJoined);
+      socket?.off("left_room", handleLeftRoom);
+      socket?.off("receiving_returned_signal", handleReceivingReturningSignal);
+      socket?.off("room_deleted", handleRoomDeleted);
+      socket?.emit("leave_room");
+
+      abortController.abort();
+    };
+  }, []);
+
   return (
     <div className={classes.container}>
       <div className={classes.chatWindow}>
@@ -236,16 +237,20 @@ function Chat() {
               playsInline
               className={classes.video}
             />
-            {!cameraErrorMsg && <ImSpinner8
-              style={
-                userStream.current
-                  ? { filter: "opacity(0)" }
-                  : { filter: "opacity(1)" }
-              }
-              className={classes.spinner}
-            />}
+            {!cameraErrorMsg && (
+              <ImSpinner8
+                style={
+                  userStream.current
+                    ? { filter: "opacity(0)" }
+                    : { filter: "opacity(1)" }
+                }
+                className={classes.spinner}
+              />
+            )}
             {cameraErrorMsg && <BiErrorCircle className={classes.err} />}
-            {cameraErrorMsg && <h3 style={{color:"red"}}>{cameraErrorMsg}</h3>}
+            {cameraErrorMsg && (
+              <h3 style={{ color: "red" }}>{cameraErrorMsg}</h3>
+            )}
           </div>
           {peers.map((peer: any) => (
             <Video

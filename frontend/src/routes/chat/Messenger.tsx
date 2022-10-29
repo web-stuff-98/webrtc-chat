@@ -15,32 +15,46 @@ import { useParams } from "react-router-dom";
 import useAuth from "../../context/AuthContext";
 import useUsers from "../../context/UserContext";
 
-import { MdSend } from "react-icons/md";
 import { AiFillFileAdd } from "react-icons/ai";
+import { MdSend } from "react-icons/md";
+import { BiErrorCircle } from "react-icons/bi";
+import { FaDownload } from "react-icons/fa";
 
 import User from "../../components/user/User";
 import ProgressBar from "../../components/progressBar/ProgressBar";
+import { useModal } from "../../context/ModalContext";
 
 export default function Messenger() {
   const { socket } = useSocket();
   const { user } = useAuth();
   const { roomID } = useParams();
   const { findUserData } = useUsers();
+  const { openAttachment } = useModal();
 
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [attachment, setAttachment] = useState<File>();
   const attachmentRef = useRef<File>();
 
-  const handleAttachmentSuccess = (msgID: string) => {
-    setMessages((msgs: IParsedRoomMsg[]) => {
-      let newMsgs = msgs;
-      const i = newMsgs.findIndex((msg) => msg.id === msgID);
-      if (i !== -1) newMsgs[i] = { ...newMsgs[i], attachment: "success" };
-      if (newMsgs[i].author === user.id) setAttachmentPending(false);
-      return [...newMsgs];
-    });
-  };
-  const handleAttachmentFailed = (msgID: string) => {
+  const handleAttachmentSuccess = useCallback(
+    ({ msgID, mimeType, ext }: { msgID: string; mimeType: string,ext:string }) => {
+      setMessages((msgs: IParsedRoomMsg[]) => {
+        let newMsgs = msgs;
+        const i = newMsgs.findIndex((msg) => msg.id === msgID);
+        if (i !== -1)
+          newMsgs[i] = {
+            ...newMsgs[i],
+            attachment: "success",
+            attachmentMimeType: mimeType,
+            attachmentProgress: 1,
+            attachmentExt: ext
+          };
+        if (newMsgs[i].author === user.id) setAttachmentPending(false);
+        return [...newMsgs];
+      });
+    },
+    []
+  );
+  const handleAttachmentFailed = useCallback((msgID: string) => {
     setMessages((msgs: IParsedRoomMsg[]) => {
       let newMsgs = msgs;
       const i = newMsgs.findIndex((msg) => msg.id === msgID);
@@ -48,14 +62,14 @@ export default function Messenger() {
       if (newMsgs[i].author === user.id) setAttachmentPending(false);
       return [...newMsgs];
     });
-  };
+  }, []);
   const handleAttachmentProgress = useCallback(
     ({ progress, msgID }: { progress: number; msgID: string }) => {
       setMessages((msgs: IParsedRoomMsg[]) => {
         let newMsgs = msgs;
         const i = newMsgs.findIndex((msg) => msg.id === msgID);
         newMsgs[i].attachmentProgress = progress * 100;
-        return newMsgs;
+        return [...newMsgs];
       });
     },
     []
@@ -190,6 +204,26 @@ export default function Messenger() {
                   />
                 </div>
               )}
+              {msg.attachment && msg.attachment === "failed" && (
+                <div className={classes.attachmentFailed}>
+                  <BiErrorCircle />
+                  Attachment failed
+                </div>
+              )}
+              {msg.attachment && msg.attachment === "success" && (
+                <div className={classes.attachmentDownload}>
+                  Watch / download attachment
+                  <FaDownload
+                    className={classes.attachmentIcon}
+                    onClick={() => {
+                      openAttachment(
+                        `${msg.id}.${msg.attachmentExt}`,
+                        String(msg.attachmentExt)
+                      );
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ))}
         <div ref={msgsBtmRef} style={{ height: "0px", width: "100%" }} />
@@ -226,7 +260,6 @@ export default function Messenger() {
           style={{ display: "none" }}
           id="attachment"
           name="attachment"
-          accept=".jpg,.jpeg,.png,.avif,.mp4,.mkv"
           onChange={handleAttachmentInput}
           ref={attachmentInputRef}
           type="file"

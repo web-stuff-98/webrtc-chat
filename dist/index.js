@@ -70,6 +70,7 @@ const usersJustDeletedByCleanup = [];
 const roomsJustDeletedByCleanup = [];
 io.on("connection", (socket) => {
     let currentRoom = "";
+    let lastMsg = 0;
     const checkDeletedInterval = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         if (usersJustDeletedByCleanup.includes(String(socket.data.auth))) {
             socket.emit("account_deleted");
@@ -136,7 +137,16 @@ io.on("connection", (socket) => {
         currentRoom = room.id;
     }));
     socket.on("msg_to_room", ({ msg, attachment }) => {
+        if (Date.now() - lastMsg < 1) {
+            socket.emit("resMsg", {
+                msg: "You are sending messages too fast. Max 1 per second.",
+                err: true,
+                pen: false,
+            });
+            return;
+        }
         io.to(currentRoom).emit("client_msg_to_room", Object.assign({ msg, author: String(socket.data.auth), createdAt: new Date().toISOString(), id: crypto_1.default.randomBytes(16).toString("hex") }, (attachment ? { attachment } : {})));
+        lastMsg = Date.now();
     });
     socket.on("join_room", ({ roomID }) => __awaiter(void 0, void 0, void 0, function* () {
         if (currentRoom === roomID)

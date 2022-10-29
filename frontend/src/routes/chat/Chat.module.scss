@@ -150,6 +150,30 @@
           .progressBarContainer {
             min-width: max(3rem, 4vw);
           }
+
+          .attachmentFailed {
+            color: red;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin: 0 4px;
+
+            svg {
+              font-size: 1.5rem;
+              fill: red;
+            }
+          }
+
+          .attachmentDownload {
+            display: flex;
+            align-items: center;
+            gap:var(--padding-base);
+            .attachmentIcon {
+              margin-right: var(--padding-base);
+              font-size: 1.333rem;
+            }
+          }
         }
       }
     }
