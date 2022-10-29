@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const rooms_dao_1 = __importDefault(require("../dao/rooms.dao"));
+const busboy_1 = __importDefault(require("busboy"));
 class RoomsController {
     static getRooms(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33,6 +34,22 @@ class RoomsController {
             }
             catch (e) {
                 res.status(500).json({ msg: `${e}` });
+            }
+        });
+    }
+    static uploadAttachment(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { roomID, msgID, bytes } = req.params;
+            const busboy = (0, busboy_1.default)({ headers: req.headers });
+            req.pipe(busboy);
+            try {
+                yield rooms_dao_1.default.uploadAttachment(busboy, roomID, msgID, Number(bytes));
+                res.writeHead(200, { Connection: "close" });
+                res.end();
+            }
+            catch (e) {
+                req.unpipe(busboy);
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }

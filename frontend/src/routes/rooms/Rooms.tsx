@@ -29,8 +29,8 @@ export default function Rooms() {
   };
 
   const handleRoomCreated = (r: IRoom) => {
+    cacheUserData(r.author);
     setRooms((old) => {
-      cacheUserData(r.author);
       return [...old, r];
     });
   };

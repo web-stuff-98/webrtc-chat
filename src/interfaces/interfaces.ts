@@ -15,11 +15,8 @@ export interface IRoomMsg {
   msg: string;
   author: string;
   createdAt: string;
-}
-export interface IParsedRoomMsg {
-  msg: string;
-  author: string;
-  createdAt: Date;
+  attachment?: "pending" | "failed" | "success";
+  id: string;
 }
 export interface IRoom {
   name: string;

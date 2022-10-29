@@ -221,7 +221,6 @@ function Chat() {
   return (
     <div className={classes.container}>
       <div className={classes.chatWindow}>
-        {peers.length} | {peersRef.current.length}
         <Messenger />
         <div className={classes.videos}>
           <div className={classes.container}>

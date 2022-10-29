@@ -26,24 +26,36 @@ const App = () => {
     pen: true,
   });
 
-  const handleResMsg = (data:IResMsg) => setResMsg(data)
+  const handleResMsg = (data: IResMsg) => setResMsg(data);
 
   useEffect(() => {
     if (!socket) return;
     socket.on("resMsg", handleResMsg);
     return () => {
-      socket.off("resMsg", handleResMsg)
-    }
+      socket.off("resMsg", handleResMsg);
+    };
   }, [socket]);
 
   useEffect(() => {
     const resized = () => {
-      const r = document.documentElement.style
-      r.setProperty("--horizontal-space", window.innerWidth < 1024 ? "0px" : r.getPropertyValue("--horizontal-space-default"))
-    }
-    window.addEventListener("resize", resized)
-    return () => window.removeEventListener("resize", resized)
-  }, [])
+      const r = document.documentElement.style;
+      r.setProperty(
+        "--horizontal-space",
+        window.innerWidth < 1024
+          ? "0px"
+          : r.getPropertyValue("--horizontal-space-default")
+      );
+    };
+    resized();
+    window.addEventListener("resize", resized);
+    const i = setInterval(() => {
+      resized()
+    }, 100)
+    return () => {
+      window.removeEventListener("resize", resized);
+      clearInterval(i)
+    };
+  }, []);
 
   return (
     <div className={classes.container}>
@@ -64,16 +76,16 @@ const App = () => {
         </div>
       )}
       <BrowserRouter>
-      <Nav/>
-      <main>
-        <Routes>
-          <Route index element={<Home />} />
-          <Route path="/rooms" element={<Rooms />} />
-          <Route path="/chat/:roomID" element={<Chat />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
+        <Nav />
+        <main>
+          <Routes>
+            <Route index element={<Home />} />
+            <Route path="/rooms" element={<Rooms />} />
+            <Route path="/chat/:roomID" element={<Chat />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
         </main>
       </BrowserRouter>
     </div>

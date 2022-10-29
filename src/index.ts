@@ -4,6 +4,7 @@ import cors from "cors";
 import { RemoteSocket, Server } from "socket.io";
 import dotenv from "dotenv";
 import path from "path";
+import crypto from "crypto";
 dotenv.config();
 
 import {
@@ -153,11 +154,13 @@ io.on("connection", (socket) => {
     currentRoom = room.id;
   });
 
-  socket.on("msg_to_room", ({ msg, roomID }) => {
-    socket.to(roomID).emit("client_msg_to_room", {
+  socket.on("msg_to_room", ({ msg, attachment }) => {
+    io.to(currentRoom).emit("client_msg_to_room", {
       msg,
       author: String(socket.data.auth),
       createdAt: new Date().toISOString(),
+      id: crypto.randomBytes(16).toString("hex"),
+      ...(attachment ? { attachment } : {})
     });
   });
 
@@ -210,6 +213,8 @@ io.on("connection", (socket) => {
     clearInterval(checkDeletedInterval);
   };
 });
+
+export { io };
 
 server.listen(process.env.PORT || 80);
 

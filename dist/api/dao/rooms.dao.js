@@ -14,6 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const redis_1 = __importDefault(require("../../utils/redis"));
 const crypto_1 = __importDefault(require("crypto"));
+const aws_sdk_1 = __importDefault(require("aws-sdk"));
+const index_1 = require("../../index");
 class RoomsDAO {
     static findByName(name) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -103,6 +105,55 @@ class RoomsDAO {
             }
             rooms.filter((room) => room.id !== id);
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
+        });
+    }
+    static uploadAttachment(busboy, roomID, msgID, bytes) {
+        return new Promise((resolve, reject) => {
+            aws_sdk_1.default.config.update({
+                // if you are having trouble with S3 you could just save to disk and remove attachment progress until
+                // you have everything else sorted out
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                region: "eu-west-2",
+            });
+            const s3 = new aws_sdk_1.default.S3();
+            let p = 0;
+            busboy.on("file", (fieldname, file, filename) => {
+                console.log(filename.mimeType);
+                console.log(file);
+                if (!filename.mimeType.includes("video") &&
+                    !filename.mimeType.includes("image")) {
+                    failed(new Error("Attachment must be an image or video"));
+                }
+                s3.upload({
+                    Bucket: "webrtc-chat-js",
+                    Key: `attachment.${msgID}`,
+                    Body: file,
+                }, (err, file) => {
+                    if (err)
+                        failed(err);
+                    success();
+                }).on("httpUploadProgress", (e) => {
+                    p++;
+                    // only send every 5th progress update, because its too many emits otherwise
+                    if (p === 5) {
+                        p = 0;
+                        index_1.io.to(roomID).emit("attachment_progress", {
+                            progress: e.loaded / bytes,
+                            msgID,
+                        });
+                    }
+                });
+            });
+            busboy.on("error", failed);
+            function failed(e) {
+                index_1.io.to(roomID).emit("attachment_failed", msgID);
+                reject(e);
+            }
+            function success() {
+                index_1.io.to(roomID).emit("attachment_success", msgID);
+                resolve();
+            }
         });
     }
 }

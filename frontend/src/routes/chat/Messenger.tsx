@@ -1,6 +1,6 @@
 import classes from "./Chat.module.scss";
 
-import { IParsedRoomMsg } from "../../interfaces/interfaces";
+import { IParsedRoomMsg, IRoomMsg } from "../../interfaces/interfaces";
 
 import {
   FormEvent,
@@ -16,6 +16,8 @@ import useAuth from "../../context/AuthContext";
 import useUsers from "../../context/UserContext";
 
 import { MdSend } from "react-icons/md";
+import { AiFillFileAdd } from "react-icons/ai";
+
 import User from "../../components/user/User";
 
 export default function Messenger() {
@@ -24,68 +26,155 @@ export default function Messenger() {
   const { roomID } = useParams();
   const { findUserData } = useUsers();
 
-  useEffect(() => {
-    socket?.off("server_msg_to_room").on("server_msg_to_room", handleServerMsgToRoom);
-    socket?.off("client_msg_to_room").on("client_msg_to_room", handleClientMsgToRoom);
-  }, []);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const [attachment, setAttachment] = useState<File>();
+  const attachmentRef = useRef<File>();
 
-  const handleServerMsgToRoom = (msg: string) =>
-    addMsg({ msg, author: "server", createdAt: new Date() });
-  const handleClientMsgToRoom = (data: {
-    msg: string;
-    createdAt: string;
-    author: string;
-  }) => {
-    addMsg(data);
+  const handleAttachmentSuccess = (msgID: string) => {
+    setMessages((msgs: IParsedRoomMsg[]) => {
+      let newMsgs = msgs;
+      const i = newMsgs.findIndex((msg) => msg.id === msgID);
+      if (i !== -1) newMsgs[i] = { ...newMsgs[i], attachment: "success" };
+      if (newMsgs[i].author === user.id) setAttachmentPending(false);
+      return [...newMsgs];
+    });
   };
-  const addMsg = useCallback(
-    (data: { msg: string; author: string; createdAt: string | Date }) => {
-      setMessages((oldMsgs) => [
-        ...oldMsgs,
-        {
-          ...data,
-          createdAt:
-            typeof data.createdAt === "string"
-              ? new Date(data.createdAt)
-              : data.createdAt,
-        },
-      ]);
-      msgsBtmRef.current?.scrollIntoView({ behavior: "auto" });
+  const handleAttachmentFailed = (msgID: string) => {
+    setMessages((msgs: IParsedRoomMsg[]) => {
+      let newMsgs = msgs;
+      const i = newMsgs.findIndex((msg) => msg.id === msgID);
+      if (i !== -1) newMsgs[i] = { ...newMsgs[i], attachment: "failed" };
+      if (newMsgs[i].author === user.id) setAttachmentPending(false);
+      return [...newMsgs];
+    });
+  };
+  const handleAttachmentProgress = useCallback(
+    ({ progress, msgID }: { progress: number; msgID: string }) => {
+      console.log("Attachment upload progress : " + progress);
     },
     []
   );
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("server_msg_to_room", handleServerMsgToRoom);
+      socket.on("client_msg_to_room", handleClientMsgToRoom);
+      socket.on("attachment_success", handleAttachmentSuccess);
+      socket.on("attachment_failed", handleAttachmentFailed);
+      socket.on("attachment_progress", handleAttachmentProgress);
+    }
+    return () => {
+      socket?.off("client_msg_to_room", handleClientMsgToRoom);
+      socket?.off("server_msg_to_room", handleServerMsgToRoom);
+      socket?.off("attachment_success", handleAttachmentSuccess);
+      socket?.off("attachment_failed", handleAttachmentFailed);
+      socket?.off("attachment_progress", handleAttachmentProgress);
+    };
+  }, []);
+
+  const handleServerMsgToRoom = (msg: string) =>
+    addMsg({
+      msg,
+      author: "server",
+      createdAt: new Date(),
+      id: (Math.random() + 1).toString(36).substring(7),
+    });
+  const handleClientMsgToRoom = async (data: IRoomMsg) => {
+    addMsg(data);
+    console.log(data.author);
+    console.log(user.id);
+    if (data.author === user.id && data.attachment === "pending") {
+      await uploadAttachment(data.id);
+    }
+  };
+  const addMsg = (data: {
+    msg: string;
+    author: string;
+    createdAt: string | Date;
+    id: string;
+  }) => {
+    setMessages((oldMsgs) => [
+      ...oldMsgs,
+      {
+        ...data,
+        createdAt:
+          typeof data.createdAt === "string"
+            ? new Date(data.createdAt)
+            : data.createdAt,
+      },
+    ]);
+    msgsBtmRef.current?.scrollIntoView({ behavior: "auto" });
+  };
   const [messages, setMessages] = useState<IParsedRoomMsg[]>([]);
   const [messageInput, setMessageInput] = useState("");
-  const handleSubmitMessage = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      socket?.emit("msg_to_room", { msg: messageInput, roomID: `${roomID}` });
-      addMsg({
-        msg: messageInput,
-        author: user.id,
-        createdAt: new Date(),
-      });
-    },
-    [messageInput]
-  );
   const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) => {
     setMessageInput(e.target.value);
   };
+  const handleSubmitMessage = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    socket?.emit("msg_to_room", {
+      msg: messageInput,
+      ...(attachment ? { attachment: "pending" } : {}),
+    });
+  };
+
+  const uploadAttachment = async (msgID: string) => {
+    try {
+      setAttachmentPending(true);
+      if (!attachmentRef.current) {
+        console.warn("No attachment");
+        return;
+      }
+      let formData = new FormData();
+      //@ts-ignore
+      formData.append("file", attachmentRef.current);
+      await fetch(
+        `${
+          process.env.NODE_ENV === "development" ? "http://localhost:5000" : ""
+        }/api/rooms/attachment/${roomID}/${msgID}/${attachmentRef.current.size}`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      setAttachment(undefined)
+      attachmentRef.current = undefined
+    } catch (e) {
+      console.warn(e);
+      setAttachment(undefined)
+      attachmentRef.current = undefined
+    }
+  };
+
+  const handleAttachmentInput = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const file = e.target.files[0];
+    if (!file) return;
+    setAttachment(file);
+    attachmentRef.current = file;
+  };
+  const [attachmentPending, setAttachmentPending] = useState(false);
 
   const msgFormRef = useRef<HTMLFormElement>(null);
   const msgsBtmRef = useRef<HTMLDivElement>(null);
-
   return (
     <div className={classes.messenger}>
       <div className={classes.list}>
         {messages &&
-          messages.map((msg: any) => (
-            <div key={msg.msg + msg.author + msg.createdAt} className={classes.message}>
+          messages.map((msg: IParsedRoomMsg) => (
+            <div
+              key={msg.msg + msg.author + msg.createdAt}
+              className={classes.message}
+            >
               <User
                 customDate={msg.createdAt}
                 userData={findUserData(msg.author)}
               />
               <div className={classes.content}>{msg.msg}</div>
+              {msg.attachment && <h1>{msg.attachment}</h1>}
             </div>
           ))}
         <div ref={msgsBtmRef} style={{ height: "0px", width: "100%" }} />
@@ -98,6 +187,35 @@ export default function Messenger() {
           required
         />
         <MdSend onClick={() => msgFormRef.current?.requestSubmit()} />
+        <AiFillFileAdd
+          style={
+            attachmentPending
+              ? {
+                  filter: "opacity(0.5)",
+                  pointerEvents: "none",
+                }
+              : attachment
+              ? {
+                  fill: "lime",
+                }
+              : {}
+          }
+          onClick={() => {
+            if (!attachmentPending) {
+              attachmentInputRef.current?.click();
+            }
+          }}
+        />
+        {attachment && attachment.name}
+        <input
+          style={{ display: "none" }}
+          id="attachment"
+          name="attachment"
+          accept=".jpg,.jpeg,.png,.avif,.mp4,.mkv"
+          onChange={handleAttachmentInput}
+          ref={attachmentInputRef}
+          type="file"
+        />
       </form>
     </div>
   );

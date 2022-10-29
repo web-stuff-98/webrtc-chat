@@ -1,9 +1,8 @@
 import { IRoom, IRoomMsg, IUser } from "./interfaces/interfaces";
 
+import AWS from "aws-sdk"
+
 export interface ServerToClientEvents {
-  /*noArg: () => void;
-  basicEmit: (a: number, b: string, c: Buffer) => void;
-  withAck: (d: string, callback: (e: number) => void) => void;*/
   resMsg: (data: { msg: string; err: boolean; pen: boolean }) => void;
   left_room: (uid: string) => void;
   navigate_join_room: (roomID: string) => void;
@@ -12,6 +11,9 @@ export interface ServerToClientEvents {
   room_created: (data: IRoom) => void;
   room_deleted: (roomID: string) => void;
   account_deleted: () => void;
+  attachment_progress: (data: { progress: number; msgID: string }) => void;
+  attachment_failed: (msgID:string) => void;
+  attachment_success: (msgID:string) => void;
 
   // WebRTC stuff
   receiving_returned_signal: (data: { signal: any; id: string }) => void;
@@ -30,7 +32,10 @@ export interface ClientToServerEvents {
   leave_room: () => void;
   other_user: (uid: string, socketID: string) => void;
   join_create_room: (data: { roomName: string }) => void;
-  msg_to_room: (data: { msg: string; roomID: string }) => void;
+  msg_to_room: (data: {
+    msg: string;
+    attachment?: "pending" | "failed" | "success";
+  }) => void;
   delete_account: () => void;
 
   // WebRTC stuff

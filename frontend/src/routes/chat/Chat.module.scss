@@ -38,10 +38,10 @@
         flex-direction: column;
         text-align: center;
 
-h3 {
-  margin: 0;
-  line-height: 1;
-}
+        h3 {
+          margin: 0;
+          line-height: 1;
+        }
 
         .spinner {
           position: absolute;
@@ -54,8 +54,8 @@ h3 {
         }
 
         .err {
-          fill:red;
-          color:red;
+          fill: red;
+          color: red;
           min-width: 2.33rem;
           min-height: 2.33rem;
           margin: 0;
@@ -107,7 +107,7 @@ h3 {
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
-    box-sizing: border-box;
+      box-sizing: border-box;
 
       form {
         border-top: var(--border-pale);
@@ -118,7 +118,6 @@ h3 {
         align-items: center;
         gap: 0.2rem;
         box-sizing: border-box;
-        
 
         input {
           width: 100%;
@@ -126,6 +125,7 @@ h3 {
         }
         svg {
           font-size: 2rem;
+          cursor: pointer;
         }
       }
 
@@ -141,7 +141,7 @@ h3 {
           align-items: center;
           padding: var(--padding-base);
           justify-content: space-between;
-          gap:var(--padding-base);
+          gap: var(--padding-base);
 
           .content {
             flex-grow: 1;
@@ -155,18 +155,18 @@ h3 {
     width: calc(100% - var(--horizontal-space) * 2);
     gap: var(--padding-base);
     display: flex;
-    
+
     .inner {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin: auto;
-          border: var(--border-light);
-    background: var(--foreground);
-    border-radius: 3px;
+      border: var(--border-light);
+      background: var(--foreground);
+      border-radius: 3px;
       margin-bottom: var(--padding-base);
-      
+
       padding: var(--padding-base);
     }
   }

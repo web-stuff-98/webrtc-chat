@@ -12,13 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIpFromRequest = void 0;
+exports.io = exports.getIpFromRequest = void 0;
 const express_1 = __importDefault(require("express"));
 const http_1 = __importDefault(require("http"));
 const cors_1 = __importDefault(require("cors"));
 const socket_io_1 = require("socket.io");
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
+const crypto_1 = __importDefault(require("crypto"));
 dotenv_1.default.config();
 const origin = process.env.NODE_ENV === "production"
     ? "https://webrtc-chat-js.herokuapp.com/"
@@ -36,6 +37,7 @@ const io = new socket_io_1.Server(server, {
         origin,
     },
 });
+exports.io = io;
 const users_route_1 = __importDefault(require("./api/users.route"));
 const rooms_route_1 = __importDefault(require("./api/rooms.route"));
 const rooms_dao_1 = __importDefault(require("./api/dao/rooms.dao"));
@@ -133,12 +135,8 @@ io.on("connection", (socket) => {
         socket === null || socket === void 0 ? void 0 : socket.emit("navigate_join_room", room.id);
         currentRoom = room.id;
     }));
-    socket.on("msg_to_room", ({ msg, roomID }) => {
-        socket.to(roomID).emit("client_msg_to_room", {
-            msg,
-            author: String(socket.data.auth),
-            createdAt: new Date().toISOString(),
-        });
+    socket.on("msg_to_room", ({ msg, attachment }) => {
+        io.to(currentRoom).emit("client_msg_to_room", Object.assign({ msg, author: String(socket.data.auth), createdAt: new Date().toISOString(), id: crypto_1.default.randomBytes(16).toString("hex") }, (attachment ? { attachment } : {})));
     });
     socket.on("join_room", ({ roomID }) => __awaiter(void 0, void 0, void 0, function* () {
         if (currentRoom === roomID)
