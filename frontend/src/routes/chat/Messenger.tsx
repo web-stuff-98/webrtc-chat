@@ -19,6 +19,7 @@ import { MdSend } from "react-icons/md";
 import { AiFillFileAdd } from "react-icons/ai";
 
 import User from "../../components/user/User";
+import ProgressBar from "../../components/progressBar/ProgressBar";
 
 export default function Messenger() {
   const { socket } = useSocket();
@@ -50,7 +51,12 @@ export default function Messenger() {
   };
   const handleAttachmentProgress = useCallback(
     ({ progress, msgID }: { progress: number; msgID: string }) => {
-      console.log("Attachment upload progress : " + progress);
+      setMessages((msgs: IParsedRoomMsg[]) => {
+        let newMsgs = msgs;
+        const i = newMsgs.findIndex((msg) => msg.id === msgID);
+        newMsgs[i].attachmentProgress = progress * 100;
+        return newMsgs;
+      });
     },
     []
   );
@@ -131,7 +137,9 @@ export default function Messenger() {
       await fetch(
         `${
           process.env.NODE_ENV === "development" ? "http://localhost:5000" : ""
-        }/api/rooms/attachment/${roomID}/${msgID}/${attachmentRef.current.size}`,
+        }/api/rooms/attachment/${roomID}/${msgID}/${
+          attachmentRef.current.size
+        }`,
         {
           method: "POST",
           body: formData,
@@ -140,12 +148,12 @@ export default function Messenger() {
           },
         }
       );
-      setAttachment(undefined)
-      attachmentRef.current = undefined
+      setAttachment(undefined);
+      attachmentRef.current = undefined;
     } catch (e) {
       console.warn(e);
-      setAttachment(undefined)
-      attachmentRef.current = undefined
+      setAttachment(undefined);
+      attachmentRef.current = undefined;
     }
   };
 
@@ -174,7 +182,14 @@ export default function Messenger() {
                 userData={findUserData(msg.author)}
               />
               <div className={classes.content}>{msg.msg}</div>
-              {msg.attachment && <h1>{msg.attachment}</h1>}
+              {msg.attachment && msg.attachment === "pending" && (
+                <div className={classes.progressBarContainer}>
+                  <ProgressBar
+                    percent={msg.attachmentProgress}
+                    label={"Attachment..."}
+                  />
+                </div>
+              )}
             </div>
           ))}
         <div ref={msgsBtmRef} style={{ height: "0px", width: "100%" }} />

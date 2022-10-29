@@ -22,6 +22,7 @@ export interface IParsedRoomMsg {
   author: string;
   createdAt: Date;
   attachment?: "pending" | "failed" | "success";
+  attachmentProgress?: number;
   id: string;
 }
 export interface IRoom {
