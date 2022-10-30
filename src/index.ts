@@ -164,11 +164,12 @@ io.on("connection", (socket) => {
       });
       return;
     }
+    const id = crypto.randomBytes(16).toString("hex");
     io.to(currentRoom).emit("client_msg_to_room", {
       msg,
       author: String(socket.data.auth),
       createdAt: new Date().toISOString(),
-      id: crypto.randomBytes(16).toString("hex"),
+      id,
       ...(attachment ? { attachment } : {}),
     });
     lastMsg = Date.now();
@@ -204,7 +205,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  const disconnectFromRoom = () => {
+  const disconnectFromRoom = async () => {
     if (currentRoom) {
       socket.leave(currentRoom);
       io.to(currentRoom).emit(
@@ -212,6 +213,13 @@ io.on("connection", (socket) => {
         `${socket.data.user?.name} has left the room`
       );
       io.to(currentRoom).emit("left_room", String(socket.data.auth));
+      // delete attachments if there's no-one left in the room
+      const sids = await (await io.in(currentRoom).fetchSockets())
+        .map((s: RemoteSocket<ServerToClientEvents, SocketData>) => s.id)
+        .filter((id) => id !== socket.id);
+      if (sids.length === 0) {
+        RoomsDAO.deleteAttachments(currentRoom)
+      }
     }
     currentRoom = "";
   };

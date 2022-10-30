@@ -8,16 +8,12 @@ import classes from "./Nav.module.scss";
 export default function Nav() {
   const { user, logout } = useAuth();
   const { socket } = useSocket();
-  const { findUserData } = useUsers()
+  const { findUserData } = useUsers();
   const navigate = useNavigate();
 
   const renderUserInfo = (userData: IUser) => {
-    return (
-      <>
-      {userData && userData.name}
-      </>
-    )
-  }
+    return <>{userData && userData.name}</>;
+  };
 
   return (
     <nav className={classes.container}>
@@ -30,7 +26,7 @@ export default function Nav() {
             Rooms
           </div>
         )}
-                {user && (
+        {user && (
           <div onClick={() => navigate("/settings")} className={classes.link}>
             Settings
           </div>

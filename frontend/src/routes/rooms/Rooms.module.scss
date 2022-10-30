@@ -1,97 +1,109 @@
 .container {
-    width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-base);
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--padding-base);
+
+  .roomList {
+    width: calc(100% - var(--horizontal-space) * 2);
+    flex-grow: 1;
+    border-radius: 3px;
+    margin: auto;
+    gap: var(--padding-base);
     display: flex;
     flex-direction: column;
-    gap: var(--padding-base);
-    height: 100%;
-    box-sizing: border-box;
-    padding: var(--padding-base);
 
-    .roomList {
-        border: var(--border-light);
-        background: var(--foreground);
-        width: calc(100% - var(--horizontal-space) * 2 - var(--padding-base) * 1);
+    .room {
+      width: 100%;
+      padding: var(--padding-base);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
+      box-shadow: var(--box-shadow-base);
+      border:var(--border-light);
+      border-radius: 3px;
+
+      background: var(--foreground);
+
+      .name {
+        padding: 0 var(--padding-base);
+        font-size: 1.25rem;
+        letter-spacing: -1px;
         flex-grow: 1;
-        border-radius: 3px;
-        margin: auto;
-        
-        .room {
-            width: 100%;
-            padding: var(--padding-base);
-            border-bottom: var(--border-pale);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
+        font-family: var(--font-heading);
+      }
+      .timeAuthor {
+        font-size: 0.8333rem;
+        font-weight: 300;
+      }
 
-            .name {
-                padding: 0 var(--padding-base);
-                font-size: 1.25rem;
-                letter-spacing: -1px;
-                flex-grow: 1;
-                font-family: var(--font-heading);
-            }
-            .timeAuthor {
-                font-size: 0.8333rem;
-                font-weight: 300;
-            }
+      .options {
+        display: flex;
+        gap: var(--padding-base);
+        margin-left: 0.5rem;
 
-            .options {
-                display: flex;
-                gap:var(--padding-base);
-                margin-left: 0.5rem;
-
-                span {
-                    background: var(--foreground);
-                    cursor: pointer;
-                    padding: 2px;
-                    box-shadow: var(--box-shadow-base);
-                    border:var(--border-base);
-                    border-radius: 2px;
-                    display: flex;
-                    svg {
-                        margin: auto;
-                        font-size: 1pc;
-                        filter: drop-shadow(0px 1px 1px black);
-                    }
-                }
-                .joinIconContainer {
-                    background: rgb(0, 149, 2);
-                }
-                .joinIconContainer:hover {
-                    background: chartreuse;
-                }
-            }
-        }
-    }
-
-    .inputControls {
-        height: 3rem;
-        min-height: 3rem;
-        position: sticky;
-        bottom: 0;
-        width: calc(100% - var(--horizontal-space) * 2);
-        margin: auto;
-        .inner {
-            border-radius: 3px;
-            border: var(--border-light);
-            display: flex;
-            background: var(--foreground);
+        span {
+          background: var(--foreground);
+          cursor: pointer;
+          padding: 2px;
+          box-shadow: var(--box-shadow-base);
+          border: var(--border-base);
+          border-radius: 2px;
+          display: flex;
+          svg {
             margin: auto;
-            width: calc(100% - var(--padding-base));
-            height: calc(100% - var(--padding-base));
-            display: flex;
-            box-sizing: border-box;
-            padding: var(--padding-base);
-            justify-content: space-between;
-            gap:var(--padding-base);
-            input {
-                flex-grow: 1;
-                padding: 0 var(--padding-base);
-            }
-            button {
-                height: 100%;
-            }
+            font-size: 1pc;
+            filter: drop-shadow(0px 1px 1px black);
+          }
         }
+        .joinIconContainer {
+          background: rgb(0, 149, 2);
+        }
+        .joinIconContainer:hover {
+          background: chartreuse;
+        }
+      }
     }
+
+    .room:last-of-type {
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.166);
+    }
+  }
+
+  .inputControls {
+    height: 3rem;
+    min-height: 3rem;
+    position: sticky;
+    bottom: 0;
+    width: calc(100% - var(--horizontal-space) * 2);
+    margin: auto;
+
+    .inner {
+      box-shadow: var(--box-shadow-base);
+      border-radius: 3px;
+      border: var(--border-base);
+      display: flex;
+      background: var(--foreground);
+      margin: auto;
+      width: calc(100% - var(--padding-base));
+      height: calc(100% - var(--padding-base));
+      display: flex;
+      box-sizing: border-box;
+      padding: var(--padding-base);
+      justify-content: space-between;
+      gap: var(--padding-base);
+      input {
+        flex-grow: 1;
+        padding: 0 var(--padding-base);
+      }
+      button {
+        height: 100%;
+        font-size: 1rem;
+      }
+    }
+  }
 }

@@ -1,9 +1,10 @@
 import "./globals.css";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, createContext } from "react";
 
 import classes from "./App.module.scss";
 
 import { BiErrorCircle } from "react-icons/bi";
+import{  MdDarkMode }from "react-icons/md"
 import { ImSpinner8 } from "react-icons/im";
 import { useSocket } from "./context/SocketContext";
 import { IResMsg } from "./interfaces/interfaces";
@@ -20,7 +21,6 @@ import { EModalType, useModal } from "./context/ModalContext";
 
 const App = () => {
   const { state: mState, closeAttachment } = useModal();
-
   const { socket } = useSocket();
 
   const [resMsg, setResMsg] = useState<IResMsg>({
@@ -60,7 +60,10 @@ const App = () => {
     };
   }, []);
 
-  //"https://d27jd5hhl2iqqv.cloudfront.net/3191bcce081a63069764c20e5ce9b97a.mp4"
+  const [dark, setDark] = useState(true)
+  useEffect(() => {
+    document.body.classList.toggle("dark")
+  }, [dark])
 
   const hiddenAttachmentDownloadTag = useRef<HTMLAnchorElement>(null);
   return (
@@ -81,7 +84,7 @@ const App = () => {
                 {mState.modalType === EModalType.ViewAttachmentImage && (
                   <img src={mState.url} />
                 )}
-                {mState.modalType === EModalType.ViewAttachmentImage && (
+                {mState.modalType === EModalType.ViewAttachmentFile && (
                   <>
                     <a
                       ref={hiddenAttachmentDownloadTag}
@@ -123,6 +126,13 @@ const App = () => {
       )}
       <BrowserRouter>
         <Nav />
+        <header>
+          WebRTC-chat-js
+          <div onClick={() => setDark(!dark)} className={classes.darkToggle}>
+            Toggle dark mode
+              <MdDarkMode/>
+          </div>
+        </header>
         <main>
           <Routes>
             <Route index element={<Home />} />

@@ -1,30 +1,82 @@
 .container {
-    width: calc(100% - var(--horizontal-space) * 0.4 - var(--nav-extra-padding) * 24);
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    gap:var(--padding-base);
-    background: var(--foreground);
-    border-radius: 3px;
-    border:var(--border-light);
-    padding: calc(var(--padding-base) * 4);
-    max-width: 20pc;
+  width: calc(
+    100% - var(--horizontal-space) * 0.3 - var(--nav-extra-padding) * 2
+  );
+  margin: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--padding-base);
+  padding: calc(var(--padding-base) * 4);
+  max-width: min(37rem, 85vw);
+  gap: 2rem;
+  background: var(--foreground);
+  border-radius: 3px;
+  border: var(--border-base);
+  box-shadow: var(--box-shadow-base);
 
-    button {
-        font-size: 2rem;
-    }
+  button {
+    font-size: 2rem;
+  }
 
+  text-align: left;
+
+  @media (max-width: 480px) {
     text-align: center;
+    flex-direction: column;
+  }
 
+  .text {
     h1 {
-        font-size: 2rem;
-        font-family: var(--font-heading);
-        margin: 0;
-        line-height: 1;
+      font-size: 1.866rem;
+      font-family: var(--font-heading);
+      margin: 0;
+      line-height: 1;
+      margin-bottom: var(--padding-base);
     }
 
     p {
-        margin: 0;
-        font-size: 1rem;
+      margin: 0;
+      margin-bottom: var(--padding-base);
+      font-size: 1.05rem;
     }
+
+    p {
+      @media (max-width: 480px) {
+        padding: 0.5rem;
+      }
+    }
+
+    p:last-of-type {
+      @media (max-width: 480px) {
+        margin-top: 1rem;
+      }
+    }
+  }
+
+  .icons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    align-items: center;
+    justify-content: center;
+    gap: 0.666rem;
+    flex-wrap: wrap;
+    margin: auto;
+    filter: drop-shadow(var(--box-shadow-base));
+    background: rgba(0, 0, 0, 0.333);
+    padding: 0.25rem;
+    border-radius: 3px;
+    border: var(--border-base);
+    box-shadow: var(--box-shadow-base);
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+
+    img {
+      padding: 0.25rem;
+      width: 5rem;
+    }
+  }
 }

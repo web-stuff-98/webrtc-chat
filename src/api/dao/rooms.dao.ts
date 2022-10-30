@@ -14,12 +14,11 @@ class RoomsDAO {
     let rooms: IRoom[] = [];
     if (getR) {
       rooms = JSON.parse(getR);
-      if (
-        rooms.find(
-          (r: IRoom) => r.name.toLowerCase() === name.trim().toLowerCase()
-        )
-      ) {
-        return true;
+      const r = rooms.find(
+        (r: IRoom) => r.name.toLowerCase() === name.trim().toLowerCase()
+      );
+      if (r) {
+        return r;
       }
     } else {
       return false;
@@ -59,7 +58,10 @@ class RoomsDAO {
       createdAt: new Date().toISOString(),
       id: crypto.randomBytes(16).toString("hex"),
     };
-    rooms.push(room);
+    rooms.push({
+      ...room,
+      attachmentKeys: [],
+    });
     await redisClient?.set("rooms", JSON.stringify(rooms));
     await redisClient?.set(ip, JSON.stringify(IPRateLimitData));
     return room;
@@ -71,10 +73,15 @@ class RoomsDAO {
     if (getR) {
       rooms = JSON.parse(getR);
     }
-    return rooms;
+    return rooms.map((r) => ({
+      name: r.name,
+      author: r.author,
+      createdAt: r.createdAt,
+      id: r.id,
+    }));
   }
 
-  static async findById(id: string) {
+  static async findById(id: string, withAttachmentKeys?: boolean) {
     const getR = await redisClient?.get("rooms");
     let rooms: IRoom[] = [];
     if (getR) {
@@ -84,7 +91,14 @@ class RoomsDAO {
     }
     const found = rooms.find((room: IRoom) => room.id === id);
     if (found) {
-      return found;
+      return withAttachmentKeys
+        ? found
+        : {
+            name: found.name,
+            author: found.author,
+            createdAt: found.createdAt,
+            id: found.id,
+          };
     }
     throw new Error("Could not find room");
   }
@@ -109,8 +123,6 @@ class RoomsDAO {
   ) {
     return new Promise<void>((resolve, reject) => {
       AWS.config.update({
-        // if you are having trouble with S3 you could just save to disk and remove attachment progress until
-        // you have everything else sorted out
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         region: "eu-west-2",
@@ -124,18 +136,18 @@ class RoomsDAO {
         ) {
           failed(new Error("Attachment must be an image or video"));
         }
-        console.log(JSON.stringify(filename));
         const ext = String(mime.extension(filename.mimeType));
+        const key = `${msgID}.${ext}`;
         s3.upload(
           {
             Bucket: "webrtc-chat-js",
-            Key: `${msgID}.${ext}`,
+            Key: key,
             Body: file,
             ContentType: String(mime.contentType(ext)),
           },
           (err: any, file: any) => {
             if (err) failed(err);
-            success(filename.mimeType, ext);
+            success(filename.mimeType, ext, key);
           }
         ).on("httpUploadProgress", (e: AWS.S3.ManagedUpload.Progress) => {
           p++;
@@ -154,11 +166,65 @@ class RoomsDAO {
         io.to(roomID).emit("attachment_failed", msgID);
         reject(e);
       }
-      function success(mimeType: string, ext: string) {
+      async function success(mimeType: string, ext: string, key: string) {
         io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
+        const getR = await redisClient.get("rooms");
+        if (getR) {
+          const rooms: IRoom[] = JSON.parse(getR);
+          const room = rooms.find((r) => r.id === roomID);
+          room?.attachmentKeys?.push(key);
+          const i = rooms.findIndex((r) => r.id === roomID);
+          if (i !== -1 && room) rooms[i] = room;
+          await redisClient.set("rooms", JSON.stringify(rooms));
+        }
         resolve();
       }
     });
+  }
+
+  static async deleteAttachments(roomID: string) {
+    try {
+      AWS.config.update({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: "eu-west-2",
+      });
+      const s3 = new AWS.S3();
+      const attachmentKeys = (await this.findById(roomID, true)).attachmentKeys;
+      if (attachmentKeys && attachmentKeys.length > 0)
+        for await (const key of attachmentKeys) {
+          const params = {
+            Bucket: "webrtc-chat-js",
+            Key: key,
+          };
+          await new Promise<void>((resolve, reject) => {
+            s3.deleteObject(params, (err, data) => {
+              if (err) reject(err);
+              resolve();
+            });
+          });
+          const getR = await redisClient.get("rooms");
+          if (getR) {
+            const rooms: IRoom[] = JSON.parse(getR);
+            let room = rooms.find((r) => r.id === roomID);
+            if (room)
+              room = {
+                name: room?.name,
+                id: room?.id,
+                author: room?.author,
+                createdAt: room?.createdAt,
+              };
+            const i = rooms.findIndex((r) => r.id === roomID);
+            if (i !== -1 && room) rooms[i] = room;
+            await redisClient.set("rooms", JSON.stringify(rooms));
+          }
+        }
+      else {
+        console.log("No attachments to delete");
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 export default RoomsDAO;

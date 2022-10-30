@@ -114,16 +114,6 @@ function Chat() {
             username: "openrelayproject",
             credential: "openrelayproject",
           },
-          {
-            urls: "turn:openrelay.metered.ca:443",
-            username: "openrelayproject",
-            credential: "openrelayproject",
-          },
-          {
-            urls: "turn:openrelay.metered.ca:443?transport=tcp",
-            username: "openrelayproject",
-            credential: "openrelayproject",
-          },
         ],
       },
     });
@@ -153,16 +143,6 @@ function Chat() {
             username: "openrelayproject",
             credential: "openrelayproject",
           },
-          {
-            urls: "turn:openrelay.metered.ca:443",
-            username: "openrelayproject",
-            credential: "openrelayproject",
-          },
-          {
-            urls: "turn:openrelay.metered.ca:443?transport=tcp",
-            username: "openrelayproject",
-            credential: "openrelayproject",
-          },
         ],
       },
     });
@@ -188,7 +168,7 @@ function Chat() {
       const msg = `${e}`.split(": ")[1];
       setCameraErrorMsg(
         msg === "Permission denied by system"
-          ? "Permission to access the camera was denied by your system. If you still get this error after allowing access try using firefox. Other users will see a spinning loading icon inplace of your stream."
+          ? "Camera denied by chrome. If you keep getting this error after allowing access, use a none chromium based browser like firefox. You don't need TURN servers or other CDN providers to create a peer to peer network video stream."
           : msg
       );
       console.warn(e);

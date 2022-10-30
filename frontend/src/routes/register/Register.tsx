@@ -54,7 +54,7 @@ export default function Register() {
           required
         />
       </div>
-      <button type="submit">Create account</button>
+      <button type="submit">Register</button>
       {resMsg.msg && <div className={classes.resMsg}>{resMsg.msg}</div>}
     </form>
   );

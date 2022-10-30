@@ -1,16 +1,52 @@
-@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo+Narrow:wght@500&display=swap");
 
 :root {
-  --font-heading: "Archivo Black", sans-serif;
-  --font-primary: "Archivo Narrow", sans-serif;
+  --font-heading: "Powerr Black", sans-serif;
+  --font-primary: "Powerr Medium", sans-serif;
 
-  background: radial-gradient(ellipse at center, rgb(19, 19, 19) 0%, rgb(17, 17, 17) 100%);
+  background: radial-gradient(
+    ellipse at center,
+    rgb(240, 240, 240) 0%,
+    rgb(255, 255, 255) 100%
+  );
+  --background: rgb(240, 240, 240);
+  --foreground: rgba(255, 255, 255, 0.966);
+  --nav: rgba(255, 255, 255, 0.866);
+  --button: rgb(200, 33, 33);
+
+  --padding-base: min(4px, 1vw);
+
+  --border-base: 1px solid rgba(0, 0, 0, 0.25);
+  --border-dashed-base: 1px dashed rgba(0, 0, 0, 0.25);
+  --border-light: 1px solid rgba(0, 0, 0, 0.166);
+  --border-dashed-light: 1px dashed rgba(0, 0, 0, 0.166);
+  --border-pale: 1px solid rgba(0, 0, 0, 0.07);
+  --border-dashed-pale: 1px dashed rgba(0, 0, 0, 0.07);
+
+  --box-shadow-base: 0px 3px 2px rgba(0, 0, 0, 0.1);
+
+  --text: black;
+  --text-light: rgba(0,0,0,0.66);
+  --text-contrast: white;
+  --text-contrast-light: rgba(255,255,255,0.5);
+
+  --horizontal-space-default: min(33pc, 25vw);
+  --horizontal-space: min(33pc, 25vw);
+  --nav-extra-padding: calc(var(--padding-base) * 3);
+
+  --nav-height: min(2pc, 6vh);
+  --header-height: min(3pc, 8.66vh);
+}
+
+.dark {
+  background: radial-gradient(
+    ellipse at center,
+    rgb(19, 19, 19) 0%,
+    rgb(17, 17, 17) 100%
+  );
   --background: rgb(19, 19, 19);
   --foreground: rgba(21, 21, 21, 0.966);
   --nav: rgba(21, 21, 21, 0.866);
   --button: rgb(14, 14, 15);
-
-  --padding-base: min(4px, 1vw);
 
   --border-base: 1px solid rgba(255, 255, 255, 0.25);
   --border-dashed-base: 1px dashed rgba(255, 255, 255, 0.25);
@@ -21,11 +57,20 @@
 
   --box-shadow-base: 0px 4px 2px rgba(0, 0, 0, 0.866);
 
-  --horizontal-space-default: min(33pc, 25vw);
-  --horizontal-space: min(33pc, 25vw);
-  --nav-extra-padding: calc(var(--padding-base) * 3);
+  --text:white;
+  --text-light:rgba(255,255,255,0.5);
+  --text-contrast:black;
+  --text-contrast-light:rgba(0,0,0,0.5);
+}
 
-  --nav-height: min(3pc, 8.66vh);
+@font-face {
+  font-family: "Powerr Black";
+  src: url(./../public/cooper-hewitt.heavy.otf);
+}
+
+@font-face {
+  font-family: "Powerr Medium";
+  src: url(./../public/cooper-hewitt.book.otf);
 }
 
 body {
@@ -38,9 +83,11 @@ button {
   border: var(--border-light);
   background: var(--foreground);
   font-family: var(--font-heading);
+  font-size: 1.5rem;
   cursor: pointer;
   padding: 2px 1pc;
   background: var(--button);
+  color:var(--text);
 }
 
 input {
@@ -56,7 +103,7 @@ input:focus {
 }
 
 * {
-  font-size: min(3.66vw, 0.866pc);
+  font-size: min(3vw, 0.8pc);
   font-family: var(--font-primary);
-  color: white;
+  color: var(--text);
 }

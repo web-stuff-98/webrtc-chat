@@ -39,7 +39,6 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
 
   const openAttachment = (key: string, ext: string) => {
     let modalType = EModalType.ViewAttachmentFile;
-    console.log(ext)
     if (ext === "mp4") modalType = EModalType.ViewAttachmentVideo;
     else if (ext === "jpg" || ext === "jpeg")
       modalType = EModalType.ViewAttachmentImage;

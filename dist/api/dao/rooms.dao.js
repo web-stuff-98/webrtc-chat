@@ -8,6 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -24,8 +31,9 @@ class RoomsDAO {
             let rooms = [];
             if (getR) {
                 rooms = JSON.parse(getR);
-                if (rooms.find((r) => r.name.toLowerCase() === name.trim().toLowerCase())) {
-                    return true;
+                const r = rooms.find((r) => r.name.toLowerCase() === name.trim().toLowerCase());
+                if (r) {
+                    return r;
                 }
             }
             else {
@@ -61,7 +69,7 @@ class RoomsDAO {
                 createdAt: new Date().toISOString(),
                 id: crypto_1.default.randomBytes(16).toString("hex"),
             };
-            rooms.push(room);
+            rooms.push(Object.assign(Object.assign({}, room), { attachmentKeys: [] }));
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set("rooms", JSON.stringify(rooms)));
             yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.set(ip, JSON.stringify(IPRateLimitData)));
             return room;
@@ -74,10 +82,15 @@ class RoomsDAO {
             if (getR) {
                 rooms = JSON.parse(getR);
             }
-            return rooms;
+            return rooms.map((r) => ({
+                name: r.name,
+                author: r.author,
+                createdAt: r.createdAt,
+                id: r.id,
+            }));
         });
     }
-    static findById(id) {
+    static findById(id, withAttachmentKeys) {
         return __awaiter(this, void 0, void 0, function* () {
             const getR = yield (redis_1.default === null || redis_1.default === void 0 ? void 0 : redis_1.default.get("rooms"));
             let rooms = [];
@@ -89,7 +102,12 @@ class RoomsDAO {
             }
             const found = rooms.find((room) => room.id === id);
             if (found) {
-                return found;
+                return withAttachmentKeys ? found : {
+                    name: found.name,
+                    author: found.author,
+                    createdAt: found.createdAt,
+                    id: found.id,
+                };
             }
             throw new Error("Could not find room");
         });
@@ -111,8 +129,6 @@ class RoomsDAO {
     static uploadAttachment(busboy, roomID, msgID, bytes) {
         return new Promise((resolve, reject) => {
             aws_sdk_1.default.config.update({
-                // if you are having trouble with S3 you could just save to disk and remove attachment progress until
-                // you have everything else sorted out
                 accessKeyId: process.env.AWS_ACCESS_KEY_ID,
                 secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
                 region: "eu-west-2",
@@ -124,7 +140,6 @@ class RoomsDAO {
                     !filename.mimeType.includes("image")) {
                     failed(new Error("Attachment must be an image or video"));
                 }
-                console.log(JSON.stringify(filename));
                 const ext = String(mime_types_1.default.extension(filename.mimeType));
                 s3.upload({
                     Bucket: "webrtc-chat-js",
@@ -155,6 +170,50 @@ class RoomsDAO {
             function success(mimeType, ext) {
                 index_1.io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
                 resolve();
+            }
+        });
+    }
+    static deleteAttachments(roomId) {
+        var e_1, _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                aws_sdk_1.default.config.update({
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                    region: "eu-west-2",
+                });
+                const s3 = new aws_sdk_1.default.S3();
+                const attachmentKeys = (yield this.findById(roomId, true)).attachmentKeys;
+                if (attachmentKeys && attachmentKeys.length > 0)
+                    try {
+                        for (var attachmentKeys_1 = __asyncValues(attachmentKeys), attachmentKeys_1_1; attachmentKeys_1_1 = yield attachmentKeys_1.next(), !attachmentKeys_1_1.done;) {
+                            const key = attachmentKeys_1_1.value;
+                            const params = {
+                                Bucket: "webrtc-chat-js",
+                                Key: key,
+                            };
+                            yield new Promise((resolve, reject) => {
+                                s3.deleteObject(params, (err, data) => {
+                                    if (err)
+                                        reject(err);
+                                    resolve();
+                                });
+                            });
+                        }
+                    }
+                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                    finally {
+                        try {
+                            if (attachmentKeys_1_1 && !attachmentKeys_1_1.done && (_a = attachmentKeys_1.return)) yield _a.call(attachmentKeys_1);
+                        }
+                        finally { if (e_1) throw e_1.error; }
+                    }
+                else {
+                    console.log("No attachments to delete");
+                }
+            }
+            catch (e) {
+                console.error(e);
             }
         });
     }

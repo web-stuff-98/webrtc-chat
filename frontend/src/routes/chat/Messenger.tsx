@@ -101,8 +101,6 @@ export default function Messenger() {
     });
   const handleClientMsgToRoom = async (data: IRoomMsg) => {
     addMsg(data);
-    console.log(data.author);
-    console.log(user.id);
     if (data.author === user.id && data.attachment === "pending") {
       await uploadAttachment(data.id);
     }
@@ -228,7 +226,10 @@ export default function Messenger() {
           ))}
         <div ref={msgsBtmRef} style={{ height: "0px", width: "100%" }} />
       </div>
-      <form ref={msgFormRef} onSubmit={handleSubmitMessage}>
+      <form ref={msgFormRef} style={attachment ? {
+        color:"lime", lineHeight:"0.866",
+        filter:"drop-shadow(0px 2px 1.5px rgba(0,0,0,0.166))"
+      } : {}} onSubmit={handleSubmitMessage}>
         <input
           value={messageInput}
           onChange={handleMessageInput}

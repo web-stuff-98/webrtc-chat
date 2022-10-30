@@ -2,9 +2,45 @@
     display: flex;
     gap: var(--padding-base);
     height: 100vh;
-    filter:drop-shadow(var(--box-shadow-base));
     flex-direction: column;
     align-items: center;
+
+    header {
+        width: 100%;
+        height: var(--header-height);
+        position: fixed;
+        background: var(--foreground);
+        font-family: var(--font-heading);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.66rem;
+
+        @media (max-width:500px) {
+            justify-content: flex-start;
+            align-items: flex-end;
+            padding-left: calc(var(--padding-base) * 2 + var(--nav-extra-padding));
+        }
+
+        .darkToggle {
+            position: fixed;
+            right: var(--horizontal-space);
+            padding: var(--padding-base);
+            z-index: 98;
+            top:0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap:var(--padding-base);
+            font-weight: 600;
+            svg {
+                fill:var(--text);
+                color:var(--text);
+                font-size: 2rem;
+            }
+        }
+    }
 
     .modalBackdrop {
         z-index: 98;
@@ -38,6 +74,10 @@
             align-items: center;
             justify-content: center;
             gap: var(--padding-base);
+
+            video {
+                max-width: 90vw;
+            }
 
             .downloadButton {
                 background: green;
@@ -75,7 +115,6 @@
             align-items: center;
             justify-content: center;
             gap: 1rem;
-            font-size: 1.666rem;
             font-weight: 600;
             padding: 1rem;
             border-radius: 0.333rem;
@@ -104,7 +143,7 @@
         width: 100%;
         height: 100%;
         display: flex;
-        padding-top: var(--nav-height);
+        padding-top: calc(var(--nav-height) + var(--header-height));
     }
 }
 

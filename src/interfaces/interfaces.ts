@@ -23,4 +23,5 @@ export interface IRoom {
   author: string;
   createdAt: string;
   id: string;
+  attachmentKeys?: string[]
 }

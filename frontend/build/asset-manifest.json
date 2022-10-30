@@ -1,13 +1,15 @@
 {
   "files": {
-    "main.css": "/static/css/main.e7ba8ae2.css",
-    "main.js": "/static/js/main.19ae17ec.js",
+    "main.css": "/static/css/main.9a07da29.css",
+    "main.js": "/static/js/main.6a70967c.js",
+    "static/media/cooper-hewitt.book.otf": "/static/media/cooper-hewitt.book.a5902e46963a8648dcb9.otf",
+    "static/media/cooper-hewitt.heavy.otf": "/static/media/cooper-hewitt.heavy.c6b871e6fae66a047e86.otf",
     "index.html": "/index.html",
-    "main.e7ba8ae2.css.map": "/static/css/main.e7ba8ae2.css.map",
-    "main.19ae17ec.js.map": "/static/js/main.19ae17ec.js.map"
+    "main.9a07da29.css.map": "/static/css/main.9a07da29.css.map",
+    "main.6a70967c.js.map": "/static/js/main.6a70967c.js.map"
   },
   "entrypoints": [
-    "static/css/main.e7ba8ae2.css",
-    "static/js/main.19ae17ec.js"
+    "static/css/main.9a07da29.css",
+    "static/js/main.6a70967c.js"
   ]
 }

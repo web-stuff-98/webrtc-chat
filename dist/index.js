@@ -145,7 +145,8 @@ io.on("connection", (socket) => {
             });
             return;
         }
-        io.to(currentRoom).emit("client_msg_to_room", Object.assign({ msg, author: String(socket.data.auth), createdAt: new Date().toISOString(), id: crypto_1.default.randomBytes(16).toString("hex") }, (attachment ? { attachment } : {})));
+        const id = crypto_1.default.randomBytes(16).toString("hex");
+        io.to(currentRoom).emit("client_msg_to_room", Object.assign({ msg, author: String(socket.data.auth), createdAt: new Date().toISOString(), id }, (attachment ? { attachment } : {})));
         lastMsg = Date.now();
     });
     socket.on("join_room", ({ roomID }) => __awaiter(void 0, void 0, void 0, function* () {
@@ -174,15 +175,22 @@ io.on("connection", (socket) => {
             id: socket.id,
         });
     });
-    const disconnectFromRoom = () => {
-        var _a;
+    const disconnectFromRoom = () => __awaiter(void 0, void 0, void 0, function* () {
+        var _c;
         if (currentRoom) {
             socket.leave(currentRoom);
-            io.to(currentRoom).emit("server_msg_to_room", `${(_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.name} has left the room`);
+            io.to(currentRoom).emit("server_msg_to_room", `${(_c = socket.data.user) === null || _c === void 0 ? void 0 : _c.name} has left the room`);
             io.to(currentRoom).emit("left_room", String(socket.data.auth));
+            // delete attachments if there's no-one left in the room
+            const sids = yield (yield io.in(currentRoom).fetchSockets())
+                .map((s) => s.id)
+                .filter((id) => id !== socket.id);
+            if (sids.length === 0) {
+                rooms_dao_1.default.deleteAttachments(currentRoom);
+            }
         }
         currentRoom = "";
-    };
+    });
     socket.on("leave_room", disconnectFromRoom);
     socket.on("disconnect", disconnectFromRoom);
     return () => {
