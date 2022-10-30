@@ -102,12 +102,14 @@ class RoomsDAO {
             }
             const found = rooms.find((room) => room.id === id);
             if (found) {
-                return withAttachmentKeys ? found : {
-                    name: found.name,
-                    author: found.author,
-                    createdAt: found.createdAt,
-                    id: found.id,
-                };
+                return withAttachmentKeys
+                    ? found
+                    : {
+                        name: found.name,
+                        author: found.author,
+                        createdAt: found.createdAt,
+                        id: found.id,
+                    };
             }
             throw new Error("Could not find room");
         });
@@ -141,15 +143,16 @@ class RoomsDAO {
                     failed(new Error("Attachment must be an image or video"));
                 }
                 const ext = String(mime_types_1.default.extension(filename.mimeType));
+                const key = `${msgID}.${ext}`;
                 s3.upload({
                     Bucket: "webrtc-chat-js",
-                    Key: `${msgID}.${ext}`,
+                    Key: key,
                     Body: file,
                     ContentType: String(mime_types_1.default.contentType(ext)),
                 }, (err, file) => {
                     if (err)
                         failed(err);
-                    success(filename.mimeType, ext);
+                    success(filename.mimeType, ext, key);
                 }).on("httpUploadProgress", (e) => {
                     p++;
                     // only send every 2nd progress update, because its too many emits otherwise
@@ -167,13 +170,29 @@ class RoomsDAO {
                 index_1.io.to(roomID).emit("attachment_failed", msgID);
                 reject(e);
             }
-            function success(mimeType, ext) {
-                index_1.io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
-                resolve();
+            function success(mimeType, ext, key) {
+                var _a;
+                return __awaiter(this, void 0, void 0, function* () {
+                    index_1.io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
+                    const getR = yield redis_1.default.get("rooms");
+                    if (getR) {
+                        const rooms = JSON.parse(getR);
+                        const room = rooms.find((r) => r.id === roomID);
+                        if (room === null || room === void 0 ? void 0 : room.attachmentKeys)
+                            (_a = room === null || room === void 0 ? void 0 : room.attachmentKeys) === null || _a === void 0 ? void 0 : _a.push(key);
+                        else if (room)
+                            room.attachmentKeys = [key];
+                        const i = rooms.findIndex((r) => r.id === roomID);
+                        if (i !== -1 && room)
+                            rooms[i] = room;
+                        yield redis_1.default.set("rooms", JSON.stringify(rooms));
+                    }
+                    resolve();
+                });
             }
         });
     }
-    static deleteAttachments(roomId) {
+    static deleteAttachments(roomID) {
         var e_1, _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -183,7 +202,7 @@ class RoomsDAO {
                     region: "eu-west-2",
                 });
                 const s3 = new aws_sdk_1.default.S3();
-                const attachmentKeys = (yield this.findById(roomId, true)).attachmentKeys;
+                const attachmentKeys = (yield this.findById(roomID, true)).attachmentKeys;
                 if (attachmentKeys && attachmentKeys.length > 0)
                     try {
                         for (var attachmentKeys_1 = __asyncValues(attachmentKeys), attachmentKeys_1_1; attachmentKeys_1_1 = yield attachmentKeys_1.next(), !attachmentKeys_1_1.done;) {
@@ -199,6 +218,22 @@ class RoomsDAO {
                                     resolve();
                                 });
                             });
+                            const getR = yield redis_1.default.get("rooms");
+                            if (getR) {
+                                const rooms = JSON.parse(getR);
+                                let room = rooms.find((r) => r.id === roomID);
+                                if (room)
+                                    room = {
+                                        name: room === null || room === void 0 ? void 0 : room.name,
+                                        id: room === null || room === void 0 ? void 0 : room.id,
+                                        author: room === null || room === void 0 ? void 0 : room.author,
+                                        createdAt: room === null || room === void 0 ? void 0 : room.createdAt,
+                                    };
+                                const i = rooms.findIndex((r) => r.id === roomID);
+                                if (i !== -1 && room)
+                                    rooms[i] = room;
+                                yield redis_1.default.set("rooms", JSON.stringify(rooms));
+                            }
                         }
                     }
                     catch (e_1_1) { e_1 = { error: e_1_1 }; }

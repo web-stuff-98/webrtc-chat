@@ -170,9 +170,10 @@ class RoomsDAO {
         io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
         const getR = await redisClient.get("rooms");
         if (getR) {
-          const rooms: IRoom[] = JSON.parse(getR);
-          const room = rooms.find((r) => r.id === roomID);
-          room?.attachmentKeys?.push(key);
+          let rooms: IRoom[] = JSON.parse(getR);
+          let room = rooms.find((r) => r.id === roomID);
+          if (room?.attachmentKeys) room?.attachmentKeys?.push(key);
+          else if (room) room.attachmentKeys = [key];
           const i = rooms.findIndex((r) => r.id === roomID);
           if (i !== -1 && room) rooms[i] = room;
           await redisClient.set("rooms", JSON.stringify(rooms));
@@ -205,7 +206,7 @@ class RoomsDAO {
           });
           const getR = await redisClient.get("rooms");
           if (getR) {
-            const rooms: IRoom[] = JSON.parse(getR);
+            let rooms: IRoom[] = JSON.parse(getR);
             let room = rooms.find((r) => r.id === roomID);
             if (room)
               room = {
