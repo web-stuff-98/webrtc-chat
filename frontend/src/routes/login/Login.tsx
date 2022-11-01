@@ -20,6 +20,7 @@ export default function Login() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await login(username, password)
+    navigate("/rooms")
   };
 
   return (

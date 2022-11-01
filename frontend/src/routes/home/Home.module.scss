@@ -2,7 +2,6 @@
   width: calc(
     100% - var(--horizontal-space) * 0.3 - var(--nav-extra-padding) * 2
   );
-  margin: auto;
   display: flex;
   align-items: center;
   gap: var(--padding-base);
@@ -13,6 +12,8 @@
   border-radius: 3px;
   border: var(--border-base);
   box-shadow: var(--box-shadow-base);
+  height: fit-content;
+  margin: auto;
 
   button {
     font-size: 2rem;
@@ -23,6 +24,8 @@
   @media (max-width: 480px) {
     text-align: center;
     flex-direction: column;
+    gap:var(--padding-base);
+  margin: calc(var(--padding-base) * 2) auto;
   }
 
   .text {
@@ -77,6 +80,10 @@
     img {
       padding: 0.25rem;
       width: 5rem;
+
+      @media (max-width: 480px) {
+        width: 3rem;
+      }
     }
   }
 }

@@ -1,16 +1,17 @@
-import { ChangeEvent, FormEvent, useState, useEffect } from 'react';
+import { ChangeEvent, FormEvent, useState, useEffect } from "react";
 
-import classes from '../LoginRegister.module.scss';
-import formClasses from '../../FormClasses.module.scss';
+import classes from "../LoginRegister.module.scss";
+import formClasses from "../../FormClasses.module.scss";
 
-import useAuth from '../../context/AuthContext';
-import { useLocation } from 'react-router-dom';
+import useAuth from "../../context/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const { register, resMsg, clrMsg } = useAuth();
+  const navigate = useNavigate();
 
   const location = useLocation();
   useEffect(() => {
@@ -21,6 +22,7 @@ export default function Register() {
     e.preventDefault();
     try {
       await register(username, password);
+      navigate("/rooms");
     } catch (error) {
       console.error(e);
     }

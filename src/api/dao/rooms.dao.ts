@@ -3,10 +3,11 @@ import crypto from "crypto";
 import { IRoom } from "../../../src/interfaces/interfaces";
 
 import { Busboy } from "busboy";
-import AWS from "aws-sdk";
 import mime from "mime-types";
 
 import { io } from "../../index";
+
+import AWS from "../../utils/aws";
 
 class RoomsDAO {
   static async findByName(name: string) {
@@ -122,11 +123,6 @@ class RoomsDAO {
     bytes: number
   ) {
     return new Promise<void>((resolve, reject) => {
-      AWS.config.update({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        region: "eu-west-2",
-      });
       const s3 = new AWS.S3();
       let p = 0;
       busboy.on("file", (fieldname: string, file: any, filename: any) => {
@@ -170,8 +166,8 @@ class RoomsDAO {
         io.to(roomID).emit("attachment_success", { msgID, mimeType, ext });
         const getR = await redisClient.get("rooms");
         if (getR) {
-          let rooms: IRoom[] = JSON.parse(getR);
-          let room = rooms.find((r) => r.id === roomID);
+          const rooms: IRoom[] = JSON.parse(getR);
+          const room = rooms.find((r) => r.id === roomID);
           if (room?.attachmentKeys) room?.attachmentKeys?.push(key);
           else if (room) room.attachmentKeys = [key];
           const i = rooms.findIndex((r) => r.id === roomID);
@@ -185,11 +181,6 @@ class RoomsDAO {
 
   static async deleteAttachments(roomID: string) {
     try {
-      AWS.config.update({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        region: "eu-west-2",
-      });
       const s3 = new AWS.S3();
       const attachmentKeys = (await this.findById(roomID, true)).attachmentKeys;
       if (attachmentKeys && attachmentKeys.length > 0)
@@ -206,7 +197,7 @@ class RoomsDAO {
           });
           const getR = await redisClient.get("rooms");
           if (getR) {
-            let rooms: IRoom[] = JSON.parse(getR);
+            const rooms: IRoom[] = JSON.parse(getR);
             let room = rooms.find((r) => r.id === roomID);
             if (room)
               room = {
@@ -220,9 +211,6 @@ class RoomsDAO {
             await redisClient.set("rooms", JSON.stringify(rooms));
           }
         }
-      else {
-        console.log("No attachments to delete");
-      }
     } catch (e) {
       console.error(e);
     }

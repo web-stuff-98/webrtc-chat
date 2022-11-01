@@ -1,5 +1,5 @@
 .container {
-  width: 15pc;
+  width: 12pc;
   max-width: calc(100vw - var(--padding-base) * 2);
   padding: calc(var(--padding-base) * 2);
   border-radius: 3px;
@@ -10,6 +10,7 @@
   margin: auto;
   border: var(--border-light);
   background: var(--foreground);
+  box-shadow: var(--box-shadow-base);
 
   .pfpContainer {
     display: flex;
@@ -31,8 +32,8 @@
         margin: auto;
         width: 2.5rem;
         height: 2.5rem;
-        color: white;
-        fill: white;
+        color: var(--text);
+        fill: var(--text);
       }
     }
     .text {

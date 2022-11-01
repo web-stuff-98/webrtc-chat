@@ -7,7 +7,7 @@
   justify-content: center;
   gap: var(--padding-base);
   filter: drop-shadow(var(--box-shadow-base));
-  padding: var(--padding-base);
+  padding: 0 var(--padding-base);
 
   .chatWindow {
     position: relative;
@@ -39,10 +39,15 @@
         justify-content: center;
         flex-direction: column;
         text-align: center;
+        min-width: 10pc;
 
         h3 {
           margin: 0;
           line-height: 1;
+          font-weight: 600;
+          @media (max-width:480px) {
+            font-size: 0.85rem;
+        }
         }
 
         .spinner {
@@ -186,7 +191,7 @@
     width: calc(100% - var(--horizontal-space) * 2);
     gap: var(--padding-base);
     display: flex;
-    padding-bottom: calc(var(--padding-base) * 2);
+    padding-bottom: var(--padding-base);
 
     .inner {
       width: 100%;

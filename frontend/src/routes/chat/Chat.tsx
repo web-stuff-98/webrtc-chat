@@ -168,7 +168,7 @@ function Chat() {
       const msg = `${e}`.split(": ")[1];
       setCameraErrorMsg(
         msg === "Permission denied by system"
-          ? "Camera denied by chrome. If you keep getting this error after allowing access, use a none chromium based browser like firefox. You don't need TURN servers or other CDN providers to create a peer to peer network video stream."
+          ? "Permission to access the camera was denied by your system. If you still get this error after allowing access use firefox, this error only occurs on chromium based browsers."
           : msg
       );
       console.warn(e);

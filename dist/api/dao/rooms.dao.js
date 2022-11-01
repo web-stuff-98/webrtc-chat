@@ -21,9 +21,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const redis_1 = __importDefault(require("../../utils/redis"));
 const crypto_1 = __importDefault(require("crypto"));
-const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const mime_types_1 = __importDefault(require("mime-types"));
 const index_1 = require("../../index");
+const aws_1 = __importDefault(require("../../utils/aws"));
 class RoomsDAO {
     static findByName(name) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -130,12 +130,7 @@ class RoomsDAO {
     }
     static uploadAttachment(busboy, roomID, msgID, bytes) {
         return new Promise((resolve, reject) => {
-            aws_sdk_1.default.config.update({
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                region: "eu-west-2",
-            });
-            const s3 = new aws_sdk_1.default.S3();
+            const s3 = new aws_1.default.S3();
             let p = 0;
             busboy.on("file", (fieldname, file, filename) => {
                 if (!filename.mimeType.includes("video") &&
@@ -196,12 +191,7 @@ class RoomsDAO {
         var e_1, _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                aws_sdk_1.default.config.update({
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                    region: "eu-west-2",
-                });
-                const s3 = new aws_sdk_1.default.S3();
+                const s3 = new aws_1.default.S3();
                 const attachmentKeys = (yield this.findById(roomID, true)).attachmentKeys;
                 if (attachmentKeys && attachmentKeys.length > 0)
                     try {
@@ -243,9 +233,6 @@ class RoomsDAO {
                         }
                         finally { if (e_1) throw e_1.error; }
                     }
-                else {
-                    console.log("No attachments to delete");
-                }
             }
             catch (e) {
                 console.error(e);
